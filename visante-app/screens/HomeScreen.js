@@ -116,7 +116,7 @@ const ShieldIcon = () => (
 );
 
 // ─── Main Screen ───────────────────────────────────────────────────────────
-export default function HomeScreen() {
+export default function HomeScreen({ onSubmit }) {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('voice');
   const [isListening, setIsListening] = useState(false);
@@ -150,6 +150,7 @@ export default function HomeScreen() {
     try { await recordingRef.current.stopAndUnloadAsync(); } catch (_) {}
     recordingRef.current = null;
     setIsListening(false);
+    onSubmit?.();
   };
 
   const toggleMic = useCallback(async () => {
@@ -256,6 +257,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.submitBtn, !symptomText.trim() && styles.submitBtnDisabled]}
               disabled={!symptomText.trim()}
+              onPress={onSubmit}
               activeOpacity={0.85}
             >
               <Text style={styles.submitBtnText}>Submit</Text>
