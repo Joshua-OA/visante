@@ -11,7 +11,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Line, Polyline, Path, Circle, Rect, Polygon } from 'react-native-svg';
+import Svg, { Line, Polyline, Path, Circle, Rect } from 'react-native-svg';
 
 // ─── Colors (mirrors summary.html) ───────────────────────────────────────────
 const BG_COLOR     = '#f7f9fa';

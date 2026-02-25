@@ -44,16 +44,18 @@ const KEYPAD = [
   ['',  '0', '⌫'],
 ];
 
-// Format as: 55 012 3456 (9 digits, no leading zero — Ghana local after +233)
-function formatNumber(digits) {
-  const p1 = digits.slice(0, 2);
-  const p2 = digits.slice(2, 5);
-  const p3 = digits.slice(5, 9);
+// Display: 0XX XXX XXXX (leading 0 is automated, user enters 9 digits)
+function formatDisplay(digits) {
+  const full = '0' + digits;           // prepend the 0
+  const p1 = full.slice(0, 3);        // 0XX
+  const p2 = full.slice(3, 6);        // XXX
+  const p3 = full.slice(6, 10);       // XXXX
   let out = p1;
   if (p2) out += ' ' + p2;
   if (p3) out += ' ' + p3;
   return out;
 }
+
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 export default function EnterPhoneScreen({ onBack, onSendOtp }) {
@@ -65,6 +67,9 @@ export default function EnterPhoneScreen({ onBack, onSendOtp }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (val === '⌫') {
       setDigits(prev => prev.slice(0, -1));
+    } else if (val === '0' && digits.length === 0) {
+      // Leading 0 is automated — ignore it when typed as first digit
+      return;
     } else if (digits.length < 9) {
       setDigits(prev => prev + val);
     }
@@ -113,7 +118,7 @@ export default function EnterPhoneScreen({ onBack, onSendOtp }) {
             <Text style={styles.countryCodeText}>+233 ▾</Text>
           </View>
           <Text style={[styles.numberDisplay, !digits && styles.numberPlaceholder]}>
-            {digits ? formatNumber(digits) : '55 000 0000'}
+            {digits ? formatDisplay(digits) : '0XX XXX XXXX'}
           </Text>
         </View>
 
@@ -151,7 +156,7 @@ export default function EnterPhoneScreen({ onBack, onSendOtp }) {
         {/* Send OTP button */}
         <TouchableOpacity
           style={[styles.sendBtn, !isReady && styles.sendBtnDisabled]}
-          onPress={() => isReady && onSendOtp && onSendOtp(formatNumber(digits))}
+          onPress={() => isReady && onSendOtp && onSendOtp(formatDisplay(digits))}
           activeOpacity={isReady ? 0.85 : 1}
           disabled={!isReady}
         >

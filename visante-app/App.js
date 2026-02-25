@@ -11,12 +11,18 @@ import PaymentScreen from './screens/PaymentScreen';
 import WaitingScreen from './screens/WaitingScreen';
 import VideoScreen from './screens/VideoScreen';
 import SummaryScreen from './screens/SummaryScreen';
+import DashboardScreen from './screens/DashboardScreen';
 
 SplashScreen.preventAutoHideAsync();
 
+// Simulate whether the user has been here before.
+// In a real app this would come from AsyncStorage / auth state.
+const IS_RETURNING_USER = true;
+
 export default function App() {
-  const [screen, setScreen] = useState('home');
+  const [screen, setScreen] = useState(IS_RETURNING_USER ? 'dashboard' : 'home');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [triageSummary, setTriageSummary] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -27,11 +33,23 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      {/* ── Returning-user dashboard ── */}
+      {screen === 'dashboard' && (
+        <DashboardScreen onStartTriage={() => setScreen('home')} />
+      )}
+
+      {/* ── AI triage (first-time & returning re-entry) ── */}
       {screen === 'home' && (
-        <HomeScreen onSubmit={() => setScreen('results')} />
+        <HomeScreen
+          onSubmit={(summary) => {
+            setTriageSummary(summary);
+            setScreen('results');
+          }}
+        />
       )}
       {screen === 'results' && (
         <ResultsScreen
+          triageSummary={triageSummary}
           onBack={() => setScreen('home')}
           onConfirm={() => setScreen('booking')}
           onConfirmAppointment={() => setScreen('enterPhone')}
@@ -60,13 +78,14 @@ export default function App() {
         <PaymentScreen
           onBack={() => setScreen('otp')}
           onPay={() => setScreen('waiting')}
+          phoneNumber={phoneNumber}
         />
       )}
       {screen === 'waiting' && (
         <WaitingScreen
           onBack={() => setScreen('payment')}
           onCheckConnection={() => setScreen('video')}
-          onCancel={() => setScreen('home')}
+          onCancel={() => setScreen('dashboard')}
           onJoin={() => setScreen('video')}
         />
       )}

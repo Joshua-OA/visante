@@ -9,7 +9,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, {
-  Line, Polyline, Path, Rect, Circle, Ellipse,
+  Line, Polyline, Path, Rect, Circle,
 } from 'react-native-svg';
 
 // ─── Colors (mirrors video_Screen.html) ──────────────────────────────────────
@@ -44,7 +44,7 @@ const MicOffIcon = () => (
 const VideoOnIcon = () => (
   <Svg width={22} height={22} viewBox="0 0 24 24" fill="none"
     stroke={TEXT_DARK} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Polygon points="23 7 16 12 23 17 23 7" />
+    <Path d="M23 7l-7 5 7 5V7z" />
     <Rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
   </Svg>
 );

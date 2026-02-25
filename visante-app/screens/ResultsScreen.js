@@ -7,7 +7,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Line, Circle, Path, Rect, Polyline, Polygon } from 'react-native-svg';
+import Svg, { Line, Circle, Path, Rect, Polyline } from 'react-native-svg';
 
 // ─── Colors (mirrors stage-2.html) ─────────────────────────────────────────
 const BG          = '#FEF8F5';
@@ -52,7 +52,7 @@ const CheckBadgeIcon = () => (
 
 const StarIcon = () => (
   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={STAR_STROKE} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-    <Polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
   </Svg>
 );
 
@@ -73,7 +73,7 @@ const GlobeIcon = () => (
 
 const VideoIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ORANGE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Polygon points="23 7 16 12 23 17 23 7" />
+    <Path d="M23 7l-7 5 7 5V7z" />
     <Rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
   </Svg>
 );
@@ -93,9 +93,27 @@ const ArrowRightIcon = () => (
   </Svg>
 );
 
+// ─── Urgency colour map ────────────────────────────────────────────────────
+const URGENCY = {
+  low:       { label: 'Low Urgency',       bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
+  moderate:  { label: 'Moderate Urgency',  bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  high:      { label: 'High Urgency',      bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
+  emergency: { label: 'Emergency',         bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
+};
+
 // ─── Main Screen ───────────────────────────────────────────────────────────
-export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment }) {
+export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment, triageSummary }) {
   const insets = useSafeAreaInsets();
+
+  // Derive display values from triage summary, with sensible fallbacks
+  const complaint    = triageSummary?.chief_complaint ?? 'General consultation';
+  const recommendation = triageSummary?.ai_recommendation
+    ?? 'Based on your symptoms, we recommend a General Practitioner with immediate availability.';
+  const urgencyKey   = triageSummary?.urgency_level ?? 'moderate';
+  const urgency      = URGENCY[urgencyKey] ?? URGENCY.moderate;
+  const symptoms     = triageSummary?.associated_symptoms ?? [];
+  // Show chief complaint as first tag, then up to 2 associated symptoms
+  const tags         = [complaint, ...symptoms].slice(0, 3);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -133,9 +151,12 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment 
         {/* Hero text */}
         <View style={styles.heroText}>
           <Text style={styles.heroTitle}>We found a match</Text>
-          <Text style={styles.heroSub}>
-            Based on your symptoms, we recommend a General Practitioner with immediate availability.
-          </Text>
+          <Text style={styles.heroSub}>{recommendation}</Text>
+        </View>
+
+        {/* Urgency pill — driven by AI triage output */}
+        <View style={[styles.urgencyPill, { backgroundColor: urgency.bg, borderColor: urgency.border }]}>
+          <Text style={[styles.urgencyText, { color: urgency.text }]}>{urgency.label}</Text>
         </View>
 
         {/* Provider card */}
@@ -188,13 +209,15 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment 
             <TouchableOpacity style={styles.changeBtn} onPress={onConfirm} activeOpacity={0.7}>
               <Text style={styles.changeBtnText}>Change</Text>
             </TouchableOpacity>
-
           </View>
 
-          {/* Tags */}
+          {/* Symptom tags — from triage summary */}
           <View style={styles.tagsRow}>
-            <View style={styles.tag}><Text style={styles.tagText}>Flu Symptoms</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>Prescriptions</Text></View>
+            {tags.map((tag, i) => (
+              <View key={i} style={styles.tag}>
+                <Text style={styles.tagText} numberOfLines={1}>{tag}</Text>
+              </View>
+            ))}
           </View>
 
         </View>
@@ -294,6 +317,20 @@ const styles = StyleSheet.create({
     color: TEXT_MUTED,
     lineHeight: 22,
     textAlign: 'center',
+  },
+
+  // Urgency pill
+  urgencyPill: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  urgencyText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
 
   // Provider card

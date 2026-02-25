@@ -80,7 +80,6 @@ export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJ
       setWait(t => {
         if (t <= 1) {
           clearInterval(intervalRef.current);
-          onJoin && onJoin();
           return 0;
         }
         return t - 1;
@@ -88,6 +87,12 @@ export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJ
     }, 1000);
     return () => clearInterval(intervalRef.current);
   }, []);
+
+  useEffect(() => {
+    if (wait === 0) {
+      onJoin && onJoin();
+    }
+  }, [wait]);
 
   function handleCheckConnection() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
