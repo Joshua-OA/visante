@@ -9,6 +9,7 @@ import {
   concatArrayBuffers,
 } from '../utils/pcmUtils';
 import { RealtimeApiClient } from '../services/realtimeApi';
+import { transcribeAudio } from '../services/restApi';
 
 /**
  * Session states:
@@ -23,17 +24,14 @@ import { RealtimeApiClient } from '../services/realtimeApi';
 const CHUNK_INTERVAL_MS = 250; // How often we flush mic audio to the API (ms)
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10-minute safety cutoff
 
-/** iOS recording options: raw PCM16 mono at 24kHz — exactly what the API needs */
-const IOS_PCM_OPTIONS = {
+/** Recording options — iOS: raw PCM16 mono 24kHz; Android: AAC (cannot produce WAV) */
+const RECORDING_OPTIONS = {
   isMeteringEnabled: false,
   android: {
-    // Android cannot produce raw PCM via expo-av. Voice mode silently skips
-    // audio sending. The text-input fallback is the production path on Android
-    // until a native PCM module (react-native-audio-record) is added.
     extension: '.m4a',
-    outputFormat: 2,    // MPEG_4
-    audioEncoder: 3,    // AAC
-    sampleRate: 44100,
+    outputFormat: 2,      // MPEG_4 container — Whisper accepts m4a
+    audioEncoder: 3,      // AAC
+    sampleRate: 16000,
     numberOfChannels: 1,
     bitRate: 64000,
   },
@@ -103,7 +101,7 @@ export function useRealtimeSession({ onTriageComplete }) {
     console.log('[useRealtimeSession] startMicSegment: preparing new recording');
     try {
       const rec = new Audio.Recording();
-      await rec.prepareToRecordAsync(IOS_PCM_OPTIONS);
+      await rec.prepareToRecordAsync(RECORDING_OPTIONS);
       await rec.startAsync();
       recordingRef.current = rec;
       console.log('[useRealtimeSession] startMicSegment: recording started');
@@ -130,24 +128,40 @@ export function useRealtimeSession({ onTriageComplete }) {
         return;
       }
 
+      if (Platform.OS === 'android') {
+        // Android records AAC — can't stream raw PCM to Realtime API.
+        // Transcribe with Whisper and send as text instead.
+        console.log('[useRealtimeSession] flushAndSendSegment: Android — transcribing with Whisper');
+        try {
+          const text = await transcribeAudio(uri, 'm4a');
+          FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+          if (text && text.trim() && clientRef.current) {
+            clientRef.current.sendTextAndRespond(text);
+          }
+        } catch (e) {
+          console.warn('[useRealtimeSession] flushAndSendSegment: transcription error:', e);
+          FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+        }
+        // Don't restart segment loop on Android — single recording per turn
+        return;
+      }
+
+      // iOS: send raw PCM chunks as before
       const base64 = await FileSystem.readAsStringAsync(uri, {
         encoding: 'base64',
       });
       console.log('[useRealtimeSession] flushAndSendSegment: read base64, length =', base64?.length);
       FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
 
-      // Android: expo-av records AAC, not raw PCM — skip sending audio
-      if (Platform.OS !== 'android' && base64) {
+      if (base64) {
         console.log('[useRealtimeSession] flushAndSendSegment: sending audio chunk to API');
         clientRef.current.sendAudioChunk(base64);
-      } else if (Platform.OS === 'android') {
-        console.log('[useRealtimeSession] flushAndSendSegment: Android — skipping audio send (not raw PCM)');
       }
     } catch (e) {
       console.warn('[useRealtimeSession] flushAndSendSegment error:', e);
     }
 
-    // Start the next 250ms segment
+    // Start the next 250ms segment (iOS only — Android returns early above)
     await startMicSegment();
   }, [startMicSegment]);
 
@@ -169,6 +183,19 @@ export function useRealtimeSession({ onTriageComplete }) {
         await recordingRef.current.stopAndUnloadAsync();
         const uri = recordingRef.current.getURI();
         recordingRef.current = null;
+
+        // On Android, transcribe the final segment before discarding
+        if (Platform.OS === 'android' && uri && clientRef.current) {
+          try {
+            const text = await transcribeAudio(uri, 'm4a');
+            if (text && text.trim()) {
+              clientRef.current.sendTextAndRespond(text);
+            }
+          } catch (e) {
+            console.warn('[useRealtimeSession] stopMicRecording: transcription error:', e);
+          }
+        }
+
         if (uri) FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
         console.log('[useRealtimeSession] stopMicRecording: done');
       } catch (e) {
@@ -178,9 +205,13 @@ export function useRealtimeSession({ onTriageComplete }) {
   }, []);
 
   const startMicRecording = useCallback(async () => {
-    console.log('[useRealtimeSession] startMicRecording: beginning segment loop');
+    console.log('[useRealtimeSession] startMicRecording: beginning recording');
     await startMicSegment();
-    scheduleChunk();
+    if (Platform.OS !== 'android') {
+      // iOS: use 250ms chunk loop for streaming PCM to Realtime API
+      scheduleChunk();
+    }
+    // Android: records one continuous AAC segment, transcribed on stop
   }, [startMicSegment, scheduleChunk]);
 
   // ── AI audio playback ─────────────────────────────────────────────────────

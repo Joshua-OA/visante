@@ -93,3 +93,68 @@ function writeStr(view, offset, str) {
     view.setUint8(offset + i, str.charCodeAt(i));
   }
 }
+
+/**
+ * Strips the 44-byte RIFF/WAV header from a WAV ArrayBuffer,
+ * returning just the raw PCM sample data.
+ *
+ * @param {ArrayBuffer} wavBuffer  Complete WAV file bytes
+ * @returns {ArrayBuffer}          Raw PCM16 LE samples
+ */
+export function stripWavHeader(wavBuffer) {
+  // Standard WAV header is 44 bytes. Verify RIFF signature.
+  const view = new DataView(wavBuffer);
+  const riff =
+    String.fromCharCode(view.getUint8(0)) +
+    String.fromCharCode(view.getUint8(1)) +
+    String.fromCharCode(view.getUint8(2)) +
+    String.fromCharCode(view.getUint8(3));
+  if (riff === 'RIFF') {
+    // Read the actual data chunk offset for robustness
+    // "data" sub-chunk starts after "fmt " sub-chunk
+    let offset = 12; // skip RIFF header (12 bytes)
+    while (offset < wavBuffer.byteLength - 8) {
+      const id =
+        String.fromCharCode(view.getUint8(offset)) +
+        String.fromCharCode(view.getUint8(offset + 1)) +
+        String.fromCharCode(view.getUint8(offset + 2)) +
+        String.fromCharCode(view.getUint8(offset + 3));
+      const size = view.getUint32(offset + 4, true);
+      if (id === 'data') {
+        return wavBuffer.slice(offset + 8, offset + 8 + size);
+      }
+      offset += 8 + size;
+    }
+  }
+  // Fallback: assume 44-byte header
+  return wavBuffer.slice(44);
+}
+
+/**
+ * Resamples PCM16 LE audio from one sample rate to another using
+ * linear interpolation.
+ *
+ * @param {ArrayBuffer} pcmBuffer  Raw PCM16 LE samples at srcRate
+ * @param {number} srcRate         Source sample rate (e.g. 44100)
+ * @param {number} dstRate         Target sample rate (e.g. 24000)
+ * @returns {ArrayBuffer}          Resampled PCM16 LE samples at dstRate
+ */
+export function resamplePcm16(pcmBuffer, srcRate, dstRate) {
+  if (srcRate === dstRate) return pcmBuffer;
+
+  const src = new Int16Array(pcmBuffer);
+  const ratio = srcRate / dstRate;
+  const dstLength = Math.floor(src.length / ratio);
+  const dst = new Int16Array(dstLength);
+
+  for (let i = 0; i < dstLength; i++) {
+    const srcIndex = i * ratio;
+    const idx = Math.floor(srcIndex);
+    const frac = srcIndex - idx;
+    const s0 = src[idx] || 0;
+    const s1 = src[Math.min(idx + 1, src.length - 1)] || 0;
+    dst[i] = Math.round(s0 + frac * (s1 - s0));
+  }
+
+  return dst.buffer;
+}

@@ -139,39 +139,53 @@ export default function HomeScreen({ onSubmit }) {
   const [mode, setMode]           = useState('voice');
   const [symptomText, setSymptomText] = useState('');
 
-  const { sessionState, error, transcriptLines, permissionDenied, startSession, endSession } =
-    useRealtimeSession({
-      onTriageComplete: (summary) => onSubmit?.(summary),
-    });
+  const {
+    sessionState, error, transcriptLines, permissionDenied,
+    startSession, endSession, toggleRecording, isRecording,
+  } = useRealtimeSession({
+    onTriageComplete: (summary) => onSubmit?.(summary),
+  });
 
   // Auto-start the session as soon as the screen mounts
   useEffect(() => {
     startSession();
   }, []);
 
-  const isConnecting = sessionState === 'connecting';
-  const isListening  = sessionState === 'listening';
-  const isAiSpeaking = sessionState === 'ai_speaking';
-  const isActive     = isConnecting || isListening || isAiSpeaking;
-  const hasError     = sessionState === 'error';
+  const isConnecting  = sessionState === 'connecting';
+  const isListening   = sessionState === 'listening';
+  const isAiSpeaking  = sessionState === 'ai_speaking';
+  const isProcessing  = sessionState === 'processing';
+  const isUserRecording = sessionState === 'recording';
+  const isActive      = isConnecting || isListening || isAiSpeaking || isProcessing || isUserRecording;
+  const hasError      = sessionState === 'error';
 
   // Badge label and waveform color reflect current state
-  const badgeLabel = isConnecting ? 'CONNECTING…'
-    : isAiSpeaking              ? 'AI SPEAKING'
-    : isListening               ? 'LISTENING'
-    : hasError                  ? 'TAP TO RETRY'
-    :                             'CONNECTING…';
+  const badgeLabel = isConnecting   ? 'CONNECTING…'
+    : isUserRecording               ? 'RECORDING'
+    : isProcessing                  ? 'THINKING…'
+    : isAiSpeaking                  ? 'AI SPEAKING'
+    : isListening                   ? 'TAP TO SPEAK'
+    : hasError                      ? 'TAP TO RETRY'
+    :                                 'CONNECTING…';
 
-  const waveColor = isAiSpeaking ? AI_BLUE : ACCENT_TOP;
-  const waveActive = isListening || isAiSpeaking;
+  const waveColor = isAiSpeaking ? AI_BLUE : isUserRecording ? USER_ORANGE : ACCENT_TOP;
+  const waveActive = isListening || isAiSpeaking || isUserRecording;
 
   const handleMicPress = useCallback(async () => {
-    if (isActive) {
+    if (isListening || isUserRecording) {
+      // REST mode: tap to start/stop recording
+      if (toggleRecording) {
+        await toggleRecording();
+        return;
+      }
+      // Realtime mode: end session
+      endSession();
+    } else if (isActive) {
       endSession();
     } else {
       await startSession();
     }
-  }, [isActive, startSession, endSession]);
+  }, [isActive, isListening, isUserRecording, toggleRecording, startSession, endSession]);
 
   const switchToType  = useCallback(() => { if (isActive) endSession(); setMode('type'); }, [isActive, endSession]);
   const switchToVoice = useCallback(() => setMode('voice'), []);
@@ -189,8 +203,6 @@ export default function HomeScreen({ onSubmit }) {
     };
     onSubmit?.(textSummary);
   }, [symptomText, onSubmit]);
-
-  const hasTranscript = transcriptLines.length > 0;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -234,30 +246,15 @@ export default function HomeScreen({ onSubmit }) {
       {mode === 'voice' && (
         <View style={styles.body}>
 
-          {/* Title — collapses when transcript is visible */}
-          {!hasTranscript && (
-            <View style={styles.titleBlock}>
-              <Text style={styles.h1}>How can I help{'\n'}you today?</Text>
-              <Text style={styles.subtitle}>
-                {isActive
-                  ? 'Speak naturally. The AI will guide you through the questions.'
-                  : 'Tap the microphone and describe your symptoms.'}
-              </Text>
-            </View>
-          )}
-
-          {/* Live transcript scroll */}
-          {hasTranscript && (
-            <ScrollView
-              style={styles.transcriptScroll}
-              contentContainerStyle={styles.transcriptContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {transcriptLines.map((line, i) => (
-                <TranscriptLine key={i} role={line.role} text={line.text} />
-              ))}
-            </ScrollView>
-          )}
+          {/* Title */}
+          <View style={styles.titleBlock}>
+            <Text style={styles.h1}>How can I help{'\n'}you today?</Text>
+            <Text style={styles.subtitle}>
+              {isActive
+                ? 'Speak naturally. The AI will guide you through the questions.'
+                : 'Tap the microphone and describe your symptoms.'}
+            </Text>
+          </View>
 
           {/* Waveform area */}
           <View style={styles.waveBlock}>
@@ -293,13 +290,19 @@ export default function HomeScreen({ onSubmit }) {
                 ]}
                 onPress={handleMicPress}
                 activeOpacity={0.85}
-                disabled={isConnecting}
+                disabled={isConnecting || isProcessing || isAiSpeaking}
               >
-                {isActive ? <StopIcon /> : <MicIcon />}
+                {isUserRecording ? <StopIcon /> : <MicIcon />}
               </TouchableOpacity>
             </View>
             <Text style={styles.tapText}>
-              {isConnecting ? 'Connecting…' : isActive ? 'Tap to stop' : hasError ? 'Tap to retry' : 'Connecting…'}
+              {isConnecting ? 'Connecting…'
+                : isUserRecording ? 'Tap to send'
+                : isProcessing ? 'Thinking…'
+                : isAiSpeaking ? 'AI is speaking…'
+                : isListening ? 'Tap to speak'
+                : hasError ? 'Tap to retry'
+                : 'Connecting…'}
             </Text>
           </View>
 

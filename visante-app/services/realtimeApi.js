@@ -267,6 +267,26 @@ export class RealtimeApiClient {
     });
   }
 
+  /**
+   * Sends a text message (transcribed from audio) and triggers a response.
+   * Used on Android where we can't produce raw PCM for streaming.
+   *
+   * @param {string} text  The transcribed user speech
+   */
+  sendTextAndRespond(text) {
+    if (!this._ws || this._ws.readyState !== WebSocket.OPEN) return;
+    console.log('[RealtimeApiClient] sendTextAndRespond:', text?.substring(0, 80));
+    this._send({
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text }],
+      },
+    });
+    this._send({ type: 'response.create' });
+  }
+
   // ── Disconnect ────────────────────────────────────────────────────────────
 
   disconnect() {
