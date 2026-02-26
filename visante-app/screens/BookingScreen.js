@@ -11,22 +11,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Circle, Path, Rect, Polyline } from 'react-native-svg';
 
 // ─── Colors (mirrors booking.html) ─────────────────────────────────────────
-const BG           = '#FFFFFF';
-const TEXT_DARK    = '#111827';
-const TEXT_DARK2   = '#1F2937';
-const TEXT_MUTED   = '#6B7280';
-const TEXT_GRAY    = '#9CA3AF';
-const TEXT_BODY    = '#374151';
-const BORDER       = '#F3F4F6';
-const BORDER_SLOT  = '#E5E7EB';
-const ACCENT       = '#B85A5B';
-const ACCENT_SOFT  = '#FCF4F4';
-const ORANGE_SEL   = '#F47B2A';
-const DATE_MUTED   = '#CBD5E1';
-const SLOT_DIS_BG  = '#F9FAFB';
-const STATUS_DOT   = '#C15B5B';
-const WHITE        = '#FFFFFF';
-const NAVY         = '#0A1B44';
+const BG = '#FFFFFF';
+const TEXT_DARK = '#111827';
+const TEXT_DARK2 = '#1F2937';
+const TEXT_MUTED = '#6B7280';
+const TEXT_GRAY = '#9CA3AF';
+const TEXT_BODY = '#374151';
+const BORDER = '#F3F4F6';
+const BORDER_SLOT = '#E5E7EB';
+const ACCENT = '#B85A5B';
+const ACCENT_SOFT = '#FCF4F4';
+const ORANGE_SEL = '#F47B2A';
+const DATE_MUTED = '#CBD5E1';
+const SLOT_DIS_BG = '#F9FAFB';
+const STATUS_DOT = '#C15B5B';
+const WHITE = '#FFFFFF';
+const NAVY = '#0A1B44';
 
 // ─── Calendar data ──────────────────────────────────────────────────────────
 const DAY_NAMES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
@@ -36,22 +36,22 @@ const DAY_NAMES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 const CALENDAR_ROWS = [
   [
     { label: '29', muted: true }, { label: '30', muted: true },
-    { label: '1',  muted: true }, { label: '2',  muted: true },
-    { label: '3',  muted: true }, { label: '4',  muted: true },
-    { label: '5',  muted: true },
+    { label: '1', muted: true }, { label: '2', muted: true },
+    { label: '3', muted: true }, { label: '4', muted: true },
+    { label: '5', muted: true },
   ],
   [
-    { label: '6',  muted: true }, { label: '7',  muted: true },
-    { label: '8',  muted: true }, { label: '9',  muted: true },
+    { label: '6', muted: true }, { label: '7', muted: true },
+    { label: '8', muted: true }, { label: '9', muted: true },
     { label: '10', muted: true }, { label: '11', muted: true },
     { label: '12', muted: true },
   ],
   [
-    { label: '13', muted: true  },
+    { label: '13', muted: true },
     { label: '14', muted: false }, // selected by default
     { label: '15', muted: false },
-    { label: '16', muted: true  },
-    { label: '17', muted: true  },
+    { label: '16', muted: true },
+    { label: '17', muted: true },
     { label: '18', muted: false },
     { label: '19', muted: false },
   ],
@@ -126,10 +126,16 @@ const ArrowRightIcon = () => (
 );
 
 // ─── Main Screen ───────────────────────────────────────────────────────────
-export default function BookingScreen({ onBack, onConfirm }) {
+export default function BookingScreen({ onBack, onConfirm, provider, serviceType, amount }) {
   const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState('14');
   const [selectedTime, setSelectedTime] = useState('09:00 AM');
+
+  const displayName = provider?.name ?? 'Available Nurse';
+  const displayRole = provider?.specialty ?? 'Home Care Nurse';
+  const displayRating = provider?.rating ?? 4.8;
+  const displayRate = amount ?? provider?.rate ?? 60;
+  const displayAvatar = provider?.avatarUrl ?? null;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -159,19 +165,23 @@ export default function BookingScreen({ onBack, onConfirm }) {
         {/* Provider profile */}
         <View style={styles.providerProfile}>
           <View style={styles.profileImgContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150' }}
-              style={styles.profileImg}
-            />
+            {displayAvatar ? (
+              <Image source={{ uri: displayAvatar }} style={styles.profileImg} />
+            ) : (
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150' }}
+                style={styles.profileImg}
+              />
+            )}
             <View style={styles.statusDot} />
           </View>
           <View style={styles.providerInfo}>
-            <Text style={styles.providerName}>Kwame Ansah</Text>
-            <Text style={styles.providerRole}>Physician Assistant</Text>
+            <Text style={styles.providerName}>{displayName}</Text>
+            <Text style={styles.providerRole}>{displayRole}</Text>
             <View style={styles.ratingRow}>
               <StarIcon />
-              <Text style={styles.ratingValue}>4.9</Text>
-              <Text style={styles.ratingCount}>(124 reviews)</Text>
+              <Text style={styles.ratingValue}>{displayRating}</Text>
+              <Text style={styles.ratingCount}>(verified nurse)</Text>
             </View>
           </View>
         </View>
@@ -273,9 +283,13 @@ export default function BookingScreen({ onBack, onConfirm }) {
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
         <View style={styles.costInfo}>
           <Text style={styles.costLabel}>Total Cost</Text>
-          <Text style={styles.costAmount}>GHS 50.00</Text>
+          <Text style={styles.costAmount}>GHS {displayRate}.00</Text>
         </View>
-        <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.85} onPress={onConfirm}>
+        <TouchableOpacity
+          style={styles.confirmBtn}
+          activeOpacity={0.85}
+          onPress={() => onConfirm && onConfirm({ date: selectedDate, time: selectedTime })}
+        >
           <Text style={styles.confirmBtnText}>Confirm Booking</Text>
           <ArrowRightIcon />
         </TouchableOpacity>

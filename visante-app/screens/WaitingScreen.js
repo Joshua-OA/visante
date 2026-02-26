@@ -9,19 +9,20 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Polyline, Circle, Path, Rect } from 'react-native-svg';
+import { subscribeToAppointment } from '../services/firestoreService';
 
 // ─── Colors (mirrors waitng_screen.html) ─────────────────────────────────────
-const PRIMARY_RED   = '#bb5454';
-const TEXT_DARK     = '#111827';
-const TEXT_GRAY     = '#64748b';
-const TEXT_LIGHT    = '#94a3b8';
-const STATUS_GREEN  = '#10b981';
-const STAR_GOLD     = '#f59e0b';
-const TIP_BG        = '#fdf8f3';
-const TIP_BORDER    = '#f9ede0';
-const TIP_ICON      = '#e28e46';
-const CARD_BG       = '#ffffff';
-const BG_MAIN       = '#fcfcfc';
+const PRIMARY_RED = '#bb5454';
+const TEXT_DARK = '#111827';
+const TEXT_GRAY = '#64748b';
+const TEXT_LIGHT = '#94a3b8';
+const STATUS_GREEN = '#10b981';
+const STAR_GOLD = '#f59e0b';
+const TIP_BG = '#fdf8f3';
+const TIP_BORDER = '#f9ede0';
+const TIP_ICON = '#e28e46';
+const CARD_BG = '#ffffff';
+const BG_MAIN = '#fcfcfc';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const BackIcon = () => (
@@ -70,11 +71,19 @@ const BulbIcon = () => (
 // ─── Screen ──────────────────────────────────────────────────────────────────
 const INITIAL_WAIT = 5;
 
-export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJoin }) {
+export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJoin, appointmentId, provider, serviceType }) {
   const insets = useSafeAreaInsets();
   const [wait, setWait] = useState(INITIAL_WAIT);
   const intervalRef = useRef(null);
 
+  const displayName = provider?.name ?? 'Your Provider';
+  const displayRole = serviceType === 'pharmacy'
+    ? 'Pharmacy'
+    : (provider?.specialty ?? 'Home Care Nurse');
+  const displayAvatar = provider?.avatarUrl ?? null;
+  const displayRating = provider?.rating ?? '4.9';
+
+  // Countdown timer
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setWait(t => {
@@ -94,6 +103,18 @@ export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJ
     }
   }, [wait]);
 
+  // Real-time Firestore listener for appointment status
+  useEffect(() => {
+    if (!appointmentId) return;
+    const unsub = subscribeToAppointment(appointmentId, (appt) => {
+      if (appt.status === 'cancelled') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        onCancel && onCancel();
+      }
+    });
+    return unsub;
+  }, [appointmentId]);
+
   function handleCheckConnection() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onCheckConnection && onCheckConnection();
@@ -103,6 +124,7 @@ export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJ
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onCancel && onCancel();
   }
+
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -136,22 +158,26 @@ export default function WaitingScreen({ onBack, onCheckConnection, onCancel, onJ
         {/* Doctor profile card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150' }}
-              style={styles.avatar}
-            />
+            {displayAvatar ? (
+              <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+            ) : (
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150' }}
+                style={styles.avatar}
+              />
+            )}
             <View style={styles.statusDot}>
               <VideoIcon />
             </View>
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Kwame Ansah</Text>
-            <Text style={styles.profileRole}>Physician Assistant</Text>
+            <Text style={styles.profileName}>{displayName}</Text>
+            <Text style={styles.profileRole}>{displayRole}</Text>
             <View style={styles.profileRating}>
               <Text style={styles.starIcon}>★</Text>
-              <Text style={styles.ratingText}>4.9 </Text>
-              <Text style={styles.reviewCount}>(120+ reviews)</Text>
+              <Text style={styles.ratingText}>{displayRating} </Text>
+              <Text style={styles.reviewCount}>(verified)</Text>
             </View>
           </View>
 

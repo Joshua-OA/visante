@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,51 +13,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, {
   Line, Polyline, Path, Circle, Rect, Polygon,
 } from 'react-native-svg';
+import { fetchLatestAppointment, fetchPastAppointments } from '../services/firestoreService';
 
 // ─── Design tokens (mirrors app-wide system) ─────────────────────────────────
-const PRIMARY_RED  = '#bb5454';
-const TEXT_DARK    = '#1e293b';
-const TEXT_GRAY    = '#64748b';
-const TEXT_LIGHT   = '#94a3b8';
-const BG_MAIN      = '#f7f9fa';
-const CARD_BG      = '#ffffff';
-const ORANGE       = '#f47b2a';
+const PRIMARY_RED = '#bb5454';
+const TEXT_DARK = '#1e293b';
+const TEXT_GRAY = '#64748b';
+const TEXT_LIGHT = '#94a3b8';
+const BG_MAIN = '#f7f9fa';
+const CARD_BG = '#ffffff';
+const ORANGE = '#f47b2a';
 const ORANGE_LIGHT = '#fff7ed';
-const ORANGE_BORDER= '#ffedd5';
-const GREEN        = '#10b981';
-const GREEN_LIGHT  = '#ecfdf5';
+const ORANGE_BORDER = '#ffedd5';
+const GREEN = '#10b981';
+const GREEN_LIGHT = '#ecfdf5';
 const GREEN_BORDER = '#a7f3d0';
-const RED_LIGHT    = '#fef2f2';
-const RED_BORDER   = '#fecaca';
-const STAR_GOLD    = '#f59e0b';
-const BORDER_SOFT  = '#f1f5f9';
-
-// ─── Mock data (replace with real data layer later) ──────────────────────────
-const LAST_VITALS = {
-  bp: '118/76',
-  pulse: '72',
-  temp: '36.8°C',
-  spo2: '98%',
-  date: 'Feb 18, 2026',
-};
-
-const LAST_APPOINTMENT = {
-  doctor: 'Dr. Kwame Ansah',
-  specialty: 'Physician Assistant',
-  date: 'Feb 18, 2026',
-  time: '10:30 AM',
-  diagnosis: 'Upper Respiratory Infection',
-  avatarUri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150',
-};
-
-const PENDING_APPOINTMENT = {
-  doctor: 'Dr. Kwame Ansah',
-  specialty: 'Physician Assistant',
-  date: 'Mar 4, 2026',
-  time: '2:00 PM',
-  status: 'Confirmed',
-  avatarUri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150',
-};
+const RED_LIGHT = '#fef2f2';
+const RED_BORDER = '#fecaca';
+const STAR_GOLD = '#f59e0b';
+const BORDER_SOFT = '#f1f5f9';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const HeartIcon = () => (
@@ -154,11 +128,29 @@ export default function DashboardScreen({ onStartTriage }) {
   const insets = useSafeAreaInsets();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  // ── Firestore data ──
+  const [latestAppt, setLatestAppt] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        const latest = await fetchLatestAppointment();
+        setLatestAppt(latest);
+      } catch (e) {
+        console.warn('Dashboard Firestore load error:', e);
+      } finally {
+        setLoadingData(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
+
   function handlePressTriage() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.94, duration: 100, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1,    duration: 120, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 120, useNativeDriver: true }),
     ]).start(() => onStartTriage && onStartTriage());
   }
 
@@ -189,78 +181,59 @@ export default function DashboardScreen({ onStartTriage }) {
             title="Last Vitals"
             color={GREEN}
           />
-          <Text style={styles.recordDate}>Recorded {LAST_VITALS.date}</Text>
+          <Text style={styles.recordDate}>Recorded at last pharmacy visit</Text>
 
           <View style={styles.vitalsGrid}>
-            <VitalChip label="Blood Pressure" value={LAST_VITALS.bp} unit="mmHg" />
-            <VitalChip label="Heart Rate"     value={LAST_VITALS.pulse} unit="bpm" />
-            <VitalChip label="Temperature"    value={LAST_VITALS.temp} />
-            <VitalChip label="SpO2"           value={LAST_VITALS.spo2} />
+            <VitalChip label="Blood Pressure" value="—" unit="mmHg" />
+            <VitalChip label="Heart Rate" value="—" unit="bpm" />
+            <VitalChip label="Temperature" value="—" />
+            <VitalChip label="SpO2" value="—" />
           </View>
         </View>
 
         {/* ── Last Appointment ── */}
-        <View style={styles.card}>
-          <SectionHeader
-            icon={<HeartIcon />}
-            title="Last Appointment"
-            color={PRIMARY_RED}
-          />
+        {latestAppt && (
+          <View style={styles.card}>
+            <SectionHeader
+              icon={<HeartIcon />}
+              title="Last Appointment"
+              color={PRIMARY_RED}
+            />
 
-          <View style={styles.apptRow}>
-            <Image source={{ uri: LAST_APPOINTMENT.avatarUri }} style={styles.docAvatar} />
-            <View style={styles.apptInfo}>
-              <Text style={styles.docName}>{LAST_APPOINTMENT.doctor}</Text>
-              <View style={styles.metaRow}>
-                <StethoscopeIcon />
-                <Text style={styles.metaText}>{LAST_APPOINTMENT.specialty}</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <ClockIcon />
-                <Text style={styles.metaText}>{LAST_APPOINTMENT.date} · {LAST_APPOINTMENT.time}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.diagnosisPill}>
-            <Text style={styles.diagnosisLabel}>DIAGNOSIS</Text>
-            <Text style={styles.diagnosisText}>{LAST_APPOINTMENT.diagnosis}</Text>
-          </View>
-        </View>
-
-        {/* ── Pending Appointment ── */}
-        <View style={[styles.card, styles.pendingCard]}>
-          <SectionHeader
-            icon={<CalendarIcon />}
-            title="Upcoming Appointment"
-            color={ORANGE}
-          />
-
-          <View style={styles.apptRow}>
-            <Image source={{ uri: PENDING_APPOINTMENT.avatarUri }} style={styles.docAvatar} />
-            <View style={styles.apptInfo}>
-              <Text style={styles.docName}>{PENDING_APPOINTMENT.doctor}</Text>
-              <View style={styles.metaRow}>
-                <StethoscopeIcon />
-                <Text style={styles.metaText}>{PENDING_APPOINTMENT.specialty}</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <ClockIcon />
-                <Text style={styles.metaText}>{PENDING_APPOINTMENT.date} · {PENDING_APPOINTMENT.time}</Text>
+            <View style={styles.apptRow}>
+              <View style={styles.docAvatar} />
+              <View style={styles.apptInfo}>
+                <Text style={styles.docName}>{latestAppt.providerName ?? 'Provider'}</Text>
+                <View style={styles.metaRow}>
+                  <StethoscopeIcon />
+                  <Text style={styles.metaText}>
+                    {latestAppt.providerType === 'pharmacy' ? 'Pharmacy' : 'Home Care Nurse'}
+                  </Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <ClockIcon />
+                  <Text style={styles.metaText}>
+                    {latestAppt.date ?? '—'} · {latestAppt.time ?? '—'}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.pendingStatusRow}>
-            <View style={styles.confirmedBadge}>
-              <CheckIcon />
-              <Text style={styles.confirmedText}>Confirmed</Text>
+            <View style={styles.diagnosisPill}>
+              <Text style={styles.diagnosisLabel}>SERVICE TYPE</Text>
+              <Text style={styles.diagnosisText}>
+                {latestAppt.providerType === 'pharmacy' ? 'Vitals Check at Pharmacy' : 'Nurse Home Visit'}
+              </Text>
             </View>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.cancelLink}>Cancel</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
+
+        {/* ── Loading / empty strip ── */}
+        {loadingData && (
+          <View style={[styles.card, { alignItems: 'center', paddingVertical: 24 }]}>
+            <Text style={{ color: TEXT_GRAY, fontSize: 13 }}>Loading your health records…</Text>
+          </View>
+        )}
 
       </ScrollView>
 

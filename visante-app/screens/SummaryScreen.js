@@ -12,24 +12,25 @@ import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Polyline, Path, Circle, Rect } from 'react-native-svg';
+import { saveConsultationSummary } from '../services/firestoreService';
 
 // ─── Colors (mirrors summary.html) ───────────────────────────────────────────
-const BG_COLOR     = '#f7f9fa';
-const TEXT_MAIN    = '#1e293b';
-const TEXT_SEC     = '#64748b';
-const TEXT_TERT    = '#94a3b8';
-const WHITE        = '#ffffff';
-const BTN_RED      = '#b95c5c';
-const DIAG_BG      = '#ecfdf5';
-const DIAG_BORDER  = '#a7f3d0';
-const DIAG_TEXT    = '#059669';
-const RX_BG        = '#fff7ed';
-const RX_BORDER    = '#ffedd5';
-const RX_ORANGE    = '#d97706';
-const RX_ICON_CLR  = '#c2410c';
-const STAR_YELLOW  = '#fbbf24';
+const BG_COLOR = '#f7f9fa';
+const TEXT_MAIN = '#1e293b';
+const TEXT_SEC = '#64748b';
+const TEXT_TERT = '#94a3b8';
+const WHITE = '#ffffff';
+const BTN_RED = '#b95c5c';
+const DIAG_BG = '#ecfdf5';
+const DIAG_BORDER = '#a7f3d0';
+const DIAG_TEXT = '#059669';
+const RX_BG = '#fff7ed';
+const RX_BORDER = '#ffedd5';
+const RX_ORANGE = '#d97706';
+const RX_ICON_CLR = '#c2410c';
+const STAR_YELLOW = '#fbbf24';
 const STATUS_GREEN = '#10b981';
-const BLUE_ICON    = '#0ea5e9';
+const BLUE_ICON = '#0ea5e9';
 const BORDER_LIGHT = '#f1f5f9';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -374,7 +375,7 @@ const MEDICAL_SLIP_HTML = `
 `;
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
-export default function SummaryScreen({ onBack }) {
+export default function SummaryScreen({ onBack, sessionId, provider, serviceType }) {
   const insets = useSafeAreaInsets();
   const [downloading, setDownloading] = useState(false);
 
@@ -382,6 +383,14 @@ export default function SummaryScreen({ onBack }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDownloading(true);
     try {
+      // Save summary to Firestore
+      if (sessionId) {
+        await saveConsultationSummary(sessionId, {
+          providerName: provider?.name ?? 'Unknown',
+          serviceType: serviceType ?? 'unknown',
+          downloadedAt: new Date().toISOString(),
+        });
+      }
       const { uri } = await Print.printToFileAsync({
         html: MEDICAL_SLIP_HTML,
         base64: false,

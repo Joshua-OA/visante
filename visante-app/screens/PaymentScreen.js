@@ -14,18 +14,18 @@ import Svg, { Rect, Line, Polyline, Path } from 'react-native-svg';
 import { SvgXml } from 'react-native-svg';
 
 // ─── Colors ───────────────────────────────────────────────────────────────────
-const PRIMARY_RED     = '#ba5559';
-const TEXT_DARK       = '#0f172a';
-const TEXT_GRAY       = '#64748b';
-const TEXT_CRIMSON    = '#6e1c24';
+const PRIMARY_RED = '#ba5559';
+const TEXT_DARK = '#0f172a';
+const TEXT_GRAY = '#64748b';
+const TEXT_CRIMSON = '#6e1c24';
 const TEXT_CRIMSON_LT = '#b04652';
-const BG_MAIN         = '#fcfbfa';
-const CARD_BG         = '#fcf1f3';
-const CARD_BORDER     = '#f7d4d8';
-const CARD_DIVIDER    = '#f1d3d6';
-const BORDER_LIGHT    = '#e2e8f0';
-const BG_WHITE        = '#ffffff';
-const ICON_BG         = '#fce8eb';
+const BG_MAIN = '#fcfbfa';
+const CARD_BG = '#fcf1f3';
+const CARD_BORDER = '#f7d4d8';
+const CARD_DIVIDER = '#f1d3d6';
+const BORDER_LIGHT = '#e2e8f0';
+const BG_WHITE = '#ffffff';
+const ICON_BG = '#fce8eb';
 
 // ─── SVG logo XML strings ────────────────────────────────────────────────────
 
@@ -143,10 +143,17 @@ const ShieldIcon = () => (
 );
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
-export default function PaymentScreen({ onBack, onPay, phoneNumber }) {
+export default function PaymentScreen({ onBack, onPay, phoneNumber, amount, selectedService, provider, appointmentId }) {
   const insets = useSafeAreaInsets();
   const detectedId = detectProvider(phoneNumber);
   const [selected, setSelected] = useState(detectedId || 'mtn');
+
+  // Dynamic pricing
+  const isPharmacy = selectedService === 'pharmacy';
+  const displayAmount = isPharmacy ? 0 : (amount ?? 60);
+  const providerName = provider?.name ?? (isPharmacy ? 'Pharmacy Visit' : 'Nurse Home Visit');
+  const serviceLabel = isPharmacy ? 'Vitals Check at Pharmacy' : 'Nurse Home Visit';
+  const priceLabel = isPharmacy ? 'FREE' : `GH₵ ${displayAmount}.00`;
 
   // Modal state for mismatched provider selection
   const [pendingId, setPendingId] = useState(null);
@@ -233,19 +240,19 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber }) {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View>
-              <Text style={styles.summaryTitle}>Tele-health Consultation</Text>
-              <Text style={styles.summarySubtitle}>Dr. Sarah Wilson • 30 min</Text>
+              <Text style={styles.summaryTitle}>{serviceLabel}</Text>
+              <Text style={styles.summarySubtitle}>{providerName}</Text>
             </View>
-            <Text style={styles.summaryPrice}>GH₵ 50.00</Text>
+            <Text style={styles.summaryPrice}>{priceLabel}</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.subtotalRow}>
             <Text style={styles.subtotalLabel}>Subtotal</Text>
-            <Text style={styles.subtotalValue}>GH₵ 50.00</Text>
+            <Text style={styles.subtotalValue}>{priceLabel}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>GH₵ 50.00</Text>
+            <Text style={styles.totalValue}>{priceLabel}</Text>
           </View>
         </View>
 
@@ -285,8 +292,8 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber }) {
                 {provider.LogoComponent
                   ? <provider.LogoComponent size={42} />
                   : <Text style={[styles.logoText, { color: provider.textColor, fontSize: provider.fontSize }]}>
-                      {provider.label}
-                    </Text>
+                    {provider.label}
+                  </Text>
                 }
               </View>
               <View style={styles.providerInfo}>
@@ -317,7 +324,9 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber }) {
       <View style={[styles.stickyFooter, { paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity style={styles.payBtn} onPress={handlePay} activeOpacity={0.85}>
           <LockIcon size={18} color={BG_WHITE} />
-          <Text style={styles.payBtnText}>Pay GH₵ 50.00</Text>
+          <Text style={styles.payBtnText}>
+            {isPharmacy ? 'Confirm (Free)' : `Pay GH₵ ${displayAmount}.00`}
+          </Text>
         </TouchableOpacity>
         <View style={styles.securityBadge}>
           <ShieldIcon />
@@ -342,8 +351,8 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber }) {
                     {p.LogoComponent
                       ? <p.LogoComponent size={52} />
                       : <Text style={[styles.logoText, { color: p.textColor, fontSize: p.fontSize }]}>
-                          {p.label}
-                        </Text>
+                        {p.label}
+                      </Text>
                     }
                   </View>
                 );

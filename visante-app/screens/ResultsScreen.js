@@ -10,21 +10,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Circle, Path, Rect, Polyline } from 'react-native-svg';
 
 // ─── Colors (mirrors stage-2.html) ─────────────────────────────────────────
-const BG          = '#FEF8F5';
-const WHITE       = '#FFFFFF';
-const ACCENT      = '#B8595A';
+const BG = '#FEF8F5';
+const WHITE = '#FFFFFF';
+const ACCENT = '#B8595A';
 const ACCENT_SOFT = '#FAEDED';
 const ACCENT_TEXT = '#B25A5E';
-const ORANGE      = '#F89163';
+const ORANGE = '#F89163';
 const ORANGE_SOFT = '#FFF2E9';
-const TEXT_DARK   = '#1F2937';
-const TEXT_MUTED  = '#6B7280';
-const TEXT_GRAY   = '#4B5563';
+const TEXT_DARK = '#1F2937';
+const TEXT_MUTED = '#6B7280';
+const TEXT_GRAY = '#4B5563';
 const BORDER_SOFT = '#FDF0E9';
-const TAG_BG      = '#F9FAFB';
-const TAG_BORDER  = '#F3F4F6';
-const STAR_BG     = '#FFF9E6';
-const STAR_TEXT   = '#A17614';
+const TAG_BG = '#F9FAFB';
+const TAG_BORDER = '#F3F4F6';
+const STAR_BG = '#FFF9E6';
+const STAR_TEXT = '#A17614';
 const STAR_STROKE = '#B07C16';
 
 // ─── SVG Icons ─────────────────────────────────────────────────────────────
@@ -95,10 +95,10 @@ const ArrowRightIcon = () => (
 
 // ─── Urgency colour map ────────────────────────────────────────────────────
 const URGENCY = {
-  low:       { label: 'Low Urgency',       bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
-  moderate:  { label: 'Moderate Urgency',  bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
-  high:      { label: 'High Urgency',      bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
-  emergency: { label: 'Emergency',         bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
+  low: { label: 'Low Urgency', bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
+  moderate: { label: 'Moderate Urgency', bg: '#fffbeb', text: '#b45309', border: '#fde68a' },
+  high: { label: 'High Urgency', bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
+  emergency: { label: 'Emergency', bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
 };
 
 // ─── Main Screen ───────────────────────────────────────────────────────────
@@ -106,14 +106,14 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment,
   const insets = useSafeAreaInsets();
 
   // Derive display values from triage summary, with sensible fallbacks
-  const complaint    = triageSummary?.chief_complaint ?? 'General consultation';
+  const complaint = triageSummary?.chief_complaint ?? 'General consultation';
   const recommendation = triageSummary?.ai_recommendation
     ?? 'Based on your symptoms, we recommend a General Practitioner with immediate availability.';
-  const urgencyKey   = triageSummary?.urgency_level ?? 'moderate';
-  const urgency      = URGENCY[urgencyKey] ?? URGENCY.moderate;
-  const symptoms     = triageSummary?.associated_symptoms ?? [];
+  const urgencyKey = triageSummary?.urgency_level ?? 'moderate';
+  const urgency = URGENCY[urgencyKey] ?? URGENCY.moderate;
+  const symptoms = triageSummary?.associated_symptoms ?? [];
   // Show chief complaint as first tag, then up to 2 associated symptoms
-  const tags         = [complaint, ...symptoms].slice(0, 3);
+  const tags = [complaint, ...symptoms].slice(0, 3);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -206,7 +206,7 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment,
               <Text style={styles.availLabel}>NEXT AVAILABLE</Text>
               <Text style={styles.availTime}>Today, 2:30 PM</Text>
             </View>
-            <TouchableOpacity style={styles.changeBtn} onPress={onConfirm} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.changeBtn} onPress={onConfirmAppointment} activeOpacity={0.7}>
               <Text style={styles.changeBtnText}>Change</Text>
             </TouchableOpacity>
           </View>
@@ -222,21 +222,9 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment,
 
         </View>
 
-        {/* Cost card */}
-        <View style={styles.costCard}>
-          <View style={styles.costIconBox}>
-            <WalletIcon />
-          </View>
-          <View style={styles.costInfo}>
-            <Text style={styles.costLabel}>Estimated Cost</Text>
-            <Text style={styles.costSub}>With your insurance</Text>
-          </View>
-          <Text style={styles.costPrice}>GHS50.00</Text>
-        </View>
-
         {/* Confirm button */}
         <TouchableOpacity style={styles.confirmBtn} onPress={onConfirmAppointment} activeOpacity={0.85}>
-          <Text style={styles.confirmBtnText}>Confirm Appointment</Text>
+          <Text style={styles.confirmBtnText}>Choose Service</Text>
           <ArrowRightIcon />
         </TouchableOpacity>
 
