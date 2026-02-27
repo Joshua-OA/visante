@@ -7,6 +7,7 @@ import {
   ScrollView,
   Animated,
   Image,
+  Easing,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -85,6 +86,14 @@ const ArrowRightIcon = () => (
   </Svg>
 );
 
+const ArrowRightSmallIcon = () => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none"
+    stroke={PRIMARY_RED} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <Line x1="5" y1="12" x2="19" y2="12" />
+    <Polyline points="12 5 19 12 12 19" />
+  </Svg>
+);
+
 const CheckIcon = () => (
   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none"
     stroke={GREEN} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
@@ -100,6 +109,76 @@ const StethoscopeIcon = () => (
     <Circle cx="20" cy="10" r="2" />
   </Svg>
 );
+
+// ─── Shimmer placeholder ─────────────────────────────────────────────────────
+function ShimmerBlock({ width, height, borderRadius = 8, style }) {
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  const opacity = shimmer.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.3, 0.7, 0.3],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        { width, height, borderRadius, backgroundColor: '#e2e8f0', opacity },
+        style,
+      ]}
+    />
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 16 }}>
+      {/* Vitals card skeleton */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <ShimmerBlock width={32} height={32} borderRadius={8} />
+          <ShimmerBlock width={100} height={14} />
+        </View>
+        <ShimmerBlock width={200} height={10} style={{ marginBottom: 14, marginTop: -8 }} />
+        <View style={styles.vitalsGrid}>
+          <ShimmerBlock width="47%" height={70} borderRadius={12} />
+          <ShimmerBlock width="47%" height={70} borderRadius={12} />
+          <ShimmerBlock width="47%" height={70} borderRadius={12} />
+          <ShimmerBlock width="47%" height={70} borderRadius={12} />
+        </View>
+      </View>
+
+      {/* Last appointment skeleton */}
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <ShimmerBlock width={32} height={32} borderRadius={8} />
+          <ShimmerBlock width={130} height={14} />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+          <ShimmerBlock width={50} height={50} borderRadius={25} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <ShimmerBlock width={140} height={14} />
+            <ShimmerBlock width={100} height={10} />
+            <ShimmerBlock width={120} height={10} />
+          </View>
+        </View>
+        <ShimmerBlock width="100%" height={50} borderRadius={10} />
+      </View>
+    </View>
+  );
+}
 
 // ─── Vital chip ───────────────────────────────────────────────────────────────
 function VitalChip({ label, value, unit }) {
@@ -135,7 +214,7 @@ const STATUS_LABELS = {
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
-export default function DashboardScreen({ onStartTriage, onViewActiveBooking, userProfile, phoneNumber }) {
+export default function DashboardScreen({ onStartTriage, onViewActiveBooking, onViewLastAppointment, onViewProfile, userProfile, phoneNumber }) {
   const insets = useSafeAreaInsets();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -194,9 +273,13 @@ export default function DashboardScreen({ onStartTriage, onViewActiveBooking, us
           <Text style={styles.greeting}>{greetingText}</Text>
           <Text style={styles.patientName}>{displayName}</Text>
         </View>
-        <View style={styles.avatarBadge}>
+        <TouchableOpacity
+          style={styles.avatarBadge}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onViewProfile && onViewProfile(); }}
+          activeOpacity={0.7}
+        >
           <Text style={styles.avatarInitials}>{initials}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -271,7 +354,14 @@ export default function DashboardScreen({ onStartTriage, onViewActiveBooking, us
 
         {/* ── Last Appointment ── */}
         {latestAppt && (
-          <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.8}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onViewLastAppointment && onViewLastAppointment(latestAppt);
+            }}
+          >
             <SectionHeader
               icon={<HeartIcon />}
               title="Last Appointment"
@@ -303,15 +393,16 @@ export default function DashboardScreen({ onStartTriage, onViewActiveBooking, us
                 {latestAppt.providerType === 'pharmacy' ? 'Vitals Check at Pharmacy' : 'Nurse Home Visit'}
               </Text>
             </View>
-          </View>
+
+            <View style={styles.tapHint}>
+              <Text style={styles.tapHintText}>Tap to continue from here</Text>
+              <ArrowRightSmallIcon />
+            </View>
+          </TouchableOpacity>
         )}
 
-        {/* ── Loading / empty strip ── */}
-        {loadingData && (
-          <View style={[styles.card, { alignItems: 'center', paddingVertical: 24 }]}>
-            <Text style={{ color: TEXT_GRAY, fontSize: 13 }}>Loading your health records…</Text>
-          </View>
-        )}
+        {/* ── Loading skeleton ── */}
+        {loadingData && !latestAppt && <DashboardSkeleton />}
 
       </ScrollView>
 
@@ -599,5 +690,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ffffff',
     opacity: 0.75,
+  },
+
+  // Tap hint on last appointment
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  tapHintText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: PRIMARY_RED,
   },
 });

@@ -99,7 +99,7 @@ Once you have gathered sufficient information (at minimum: chief complaint,
 duration, severity, associated symptoms):
 
 1. FIRST, respond verbally to acknowledge what the patient said.
-2. THEN, tell the patient: "Thank you, I have enough information now. The next step is to check your vitals. You can either visit a nearby pharmacy for a FREE vitals check, or book a nurse to come to you for GHS 80. I'll show you the options now."
+2. THEN, tell the patient: "Thank you, I have enough information now. The next step is to check your vitals. I'll show you the options now so you can choose how you'd like to get your vitals checked."
 3. FINALLY, call the complete_triage function with all collected data.
 
 IMPORTANT: You MUST include a spoken response along with the complete_triage

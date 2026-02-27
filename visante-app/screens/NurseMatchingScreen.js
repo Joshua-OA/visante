@@ -79,6 +79,21 @@ const HomeIcon = () => (
   </Svg>
 );
 
+const NavigationIcon = () => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none"
+    stroke={ORANGE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 11l19-9-9 19-2-8-8-2z" />
+  </Svg>
+);
+
+const MapPinIcon = ({ color = STATUS_GREEN }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <Circle cx="12" cy="10" r="3" />
+  </Svg>
+);
+
 // ─── Status config ───────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   searching: {
@@ -88,10 +103,16 @@ const STATUS_CONFIG = {
     color: PRIMARY_RED,
   },
   nurse_accepted: {
-    title: 'Nurse is on the way!',
-    subtitle: 'Your nurse has accepted and is heading to your location.',
-    headerLabel: 'NURSE MATCHED',
+    title: 'She is on her way to you',
+    subtitle: 'Your nurse has accepted and is heading to your location now.',
+    headerLabel: 'ON THE WAY',
     color: ORANGE,
+  },
+  nurse_arrived: {
+    title: 'She has arrived!',
+    subtitle: 'Your nurse is at your location and ready to begin.',
+    headerLabel: 'ARRIVED',
+    color: STATUS_GREEN,
   },
   vitals_in_progress: {
     title: 'Taking your vitals',
@@ -101,20 +122,14 @@ const STATUS_CONFIG = {
   },
   vitals_complete: {
     title: 'Vitals recorded!',
-    subtitle: 'Your vitals are ready. You can now consult a doctor.',
+    subtitle: 'Your vitals are ready. Proceed to book a doctor consultation.',
     headerLabel: 'VITALS READY',
     color: STATUS_GREEN,
   },
   consultation_ready: {
     title: 'Ready to consult',
-    subtitle: 'A doctor is available to review your vitals and symptoms.',
+    subtitle: 'Proceed to book your doctor consultation.',
     headerLabel: 'READY',
-    color: STATUS_GREEN,
-  },
-  confirmed: {
-    title: 'Appointment confirmed',
-    subtitle: 'Head to the pharmacy for your vitals check.',
-    headerLabel: 'CONFIRMED',
     color: STATUS_GREEN,
   },
 };
@@ -148,6 +163,50 @@ function PulsingCircle({ color }) {
   );
 }
 
+// ─── ETA countdown ──────────────────────────────────────────────────────────
+function ETACard({ status }) {
+  const [minutes, setMinutes] = useState(status === 'nurse_accepted' ? 12 : 0);
+
+  useEffect(() => {
+    if (status !== 'nurse_accepted') return;
+    // Simulate ETA countdown
+    const interval = setInterval(() => {
+      setMinutes((prev) => (prev > 1 ? prev - 1 : 1));
+    }, 30000); // tick every 30s
+    return () => clearInterval(interval);
+  }, [status]);
+
+  if (status === 'nurse_accepted') {
+    return (
+      <View style={styles.etaCard}>
+        <View style={styles.etaIconBox}>
+          <NavigationIcon />
+        </View>
+        <View style={styles.etaContent}>
+          <Text style={styles.etaLabel}>ESTIMATED ARRIVAL</Text>
+          <Text style={styles.etaValue}>{minutes} min away</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (status === 'nurse_arrived') {
+    return (
+      <View style={[styles.etaCard, { backgroundColor: GREEN_SOFT, borderColor: GREEN_BORDER }]}>
+        <View style={styles.etaIconBox}>
+          <MapPinIcon color={STATUS_GREEN} />
+        </View>
+        <View style={styles.etaContent}>
+          <Text style={[styles.etaLabel, { color: STATUS_GREEN }]}>LOCATION</Text>
+          <Text style={styles.etaValue}>Nurse is at your door</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return null;
+}
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 export default function NurseMatchingScreen({
   onBack,
@@ -156,12 +215,9 @@ export default function NurseMatchingScreen({
   onConsultDoctor,
   appointmentId,
   provider,
-  serviceType,
 }) {
   const insets = useSafeAreaInsets();
-  const [status, setStatus] = useState(
-    serviceType === 'nurse' ? 'searching' : 'confirmed'
-  );
+  const [status, setStatus] = useState('searching');
   const [appointment, setAppointment] = useState(null);
 
   // Real-time Firestore listener
@@ -176,7 +232,7 @@ export default function NurseMatchingScreen({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         onCancel && onCancel();
       }
-      if (appt.status === 'nurse_accepted' || appt.status === 'vitals_complete') {
+      if (appt.status === 'nurse_accepted' || appt.status === 'nurse_arrived' || appt.status === 'vitals_complete') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     });
@@ -184,14 +240,15 @@ export default function NurseMatchingScreen({
   }, [appointmentId]);
 
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.searching;
-  const displayName = appointment?.providerName ?? provider?.name ?? 'Your Provider';
-  const displayRole = serviceType === 'pharmacy'
-    ? 'Pharmacy'
-    : (provider?.specialty ?? 'Home Care Nurse');
+  const displayName = appointment?.providerName ?? provider?.name ?? 'Your Nurse';
+  const displayRole = provider?.specialty ?? 'Home Care Nurse';
   const displayAvatar = provider?.avatarUrl ?? null;
+  const displayAvatarLocal = provider?.avatarLocal ?? null;
   const displayRating = provider?.rating ?? '4.9';
 
   const isSearching = status === 'searching';
+  const isEnRoute = status === 'nurse_accepted';
+  const hasArrived = status === 'nurse_arrived';
   const isVitalsComplete = status === 'vitals_complete' || status === 'consultation_ready';
 
   function handleCancel() {
@@ -243,6 +300,14 @@ export default function NurseMatchingScreen({
               <View style={[styles.statusCircle, { backgroundColor: BLUE + '18', borderColor: BLUE + '40' }]}>
                 <ActivityIcon />
               </View>
+            ) : hasArrived ? (
+              <View style={[styles.statusCircle, { backgroundColor: STATUS_GREEN + '18', borderColor: STATUS_GREEN + '40' }]}>
+                <MapPinIcon color={STATUS_GREEN} />
+              </View>
+            ) : isEnRoute ? (
+              <View style={[styles.statusCircle, { backgroundColor: ORANGE + '18', borderColor: ORANGE + '40' }]}>
+                <NavigationIcon />
+              </View>
             ) : null}
           </View>
         )}
@@ -251,8 +316,8 @@ export default function NurseMatchingScreen({
         {!isSearching && (
           <View style={[styles.profileCard, { borderTopColor: config.color + '80' }]}>
             <View style={styles.avatarContainer}>
-              {displayAvatar ? (
-                <Image source={{ uri: displayAvatar }} style={styles.avatar} />
+              {(displayAvatarLocal || displayAvatar) ? (
+                <Image source={displayAvatarLocal || { uri: displayAvatar }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
                   <Text style={styles.avatarInitials}>
@@ -276,12 +341,18 @@ export default function NurseMatchingScreen({
             <View style={[styles.statusPill, { backgroundColor: config.color + '18' }]}>
               <View style={[styles.statusPillDot, { backgroundColor: config.color }]} />
               <Text style={[styles.statusPillText, { color: config.color }]}>
-                {status === 'nurse_accepted' ? 'En route' :
+                {isEnRoute ? 'En route' :
+                 hasArrived ? 'Arrived' :
                  status === 'vitals_in_progress' ? 'Active' :
                  isVitalsComplete ? 'Done' : 'Ready'}
               </Text>
             </View>
           </View>
+        )}
+
+        {/* ETA card — while en route or arrived */}
+        {(isEnRoute || hasArrived) && (
+          <ETACard status={status} />
         )}
 
         {/* Vitals card — when complete */}
@@ -317,7 +388,7 @@ export default function NurseMatchingScreen({
           </View>
         )}
 
-        {/* Tip card — while searching/waiting */}
+        {/* Tip card — while searching/en route/arrived */}
         {!isVitalsComplete && (
           <View style={styles.tipCard}>
             <View style={styles.tipIconWrapper}>
@@ -328,7 +399,11 @@ export default function NurseMatchingScreen({
               <Text style={styles.tipText}>
                 {isSearching
                   ? 'We\'re finding the best nurse near you. This usually takes a moment.'
-                  : 'Please relax and stay comfortable. The nurse will take care of everything.'}
+                  : hasArrived
+                    ? 'Your nurse has arrived. Please open the door and get comfortable.'
+                    : isEnRoute
+                      ? 'Your nurse is on the way. Please make sure your location is accessible.'
+                      : 'Please relax and stay comfortable. The nurse will take care of everything.'}
               </Text>
             </View>
           </View>
@@ -340,7 +415,7 @@ export default function NurseMatchingScreen({
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         {isVitalsComplete ? (
           <TouchableOpacity style={styles.btnConsult} onPress={handleConsultDoctor} activeOpacity={0.85}>
-            <Text style={styles.btnConsultText}>Consult a Doctor</Text>
+            <Text style={styles.btnConsultText}>Proceed to Book Doctor</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.btnDashboard} onPress={handleGoToDashboard} activeOpacity={0.85}>
@@ -419,6 +494,20 @@ const styles = StyleSheet.create({
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
   statusPillDot: { width: 5, height: 5, borderRadius: 2.5 },
   statusPillText: { fontSize: 11, fontWeight: '600' },
+
+  // ETA card
+  etaCard: {
+    width: '100%', backgroundColor: '#FFF7ED', borderWidth: 1, borderColor: '#FED7AA',
+    borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16,
+  },
+  etaIconBox: {
+    width: 48, height: 48, borderRadius: 24, backgroundColor: CARD_BG,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8,
+  },
+  etaContent: { flex: 1, gap: 4 },
+  etaLabel: { fontSize: 10, fontWeight: '700', color: ORANGE, letterSpacing: 0.8, textTransform: 'uppercase' },
+  etaValue: { fontSize: 18, fontWeight: '700', color: TEXT_DARK },
 
   // Vitals card
   vitalsCard: { width: '100%', backgroundColor: GREEN_SOFT, borderWidth: 1, borderColor: GREEN_BORDER, borderRadius: 14, padding: 16, marginBottom: 16 },

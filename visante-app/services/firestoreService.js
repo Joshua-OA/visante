@@ -44,6 +44,19 @@ export async function fetchUserProfile(phoneNumber) {
     return { id: snap.id, ...snap.data() };
 }
 
+/**
+ * Update the latest vitals on a user's profile.
+ * Called after vitals are recorded (pharmacy or nurse flow).
+ */
+export async function updateUserVitals(phoneNumber, vitals) {
+    if (!phoneNumber) return;
+    await updateDoc(doc(db, 'users', phoneNumber), {
+        latestVitals: vitals,
+        vitalsUpdatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SESSIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -151,6 +164,7 @@ export async function createAppointment({ sessionId, providerType, providerId, p
 
 /**
  * Update vitals on an appointment (called by nurse/pharmacy provider side).
+ * Also updates the user profile with latest vitals if phoneNumber is available.
  */
 export async function updateAppointmentVitals(appointmentId, vitals) {
     await updateDoc(doc(db, 'appointments', appointmentId), {
@@ -158,6 +172,18 @@ export async function updateAppointmentVitals(appointmentId, vitals) {
         status: 'vitals_complete',
         updatedAt: serverTimestamp(),
     });
+    // Also update user profile vitals
+    try {
+        const apptSnap = await getDoc(doc(db, 'appointments', appointmentId));
+        if (apptSnap.exists()) {
+            const phone = apptSnap.data().phoneNumber;
+            if (phone) {
+                await updateUserVitals(phone, vitals);
+            }
+        }
+    } catch (e) {
+        console.warn('Could not update user vitals:', e);
+    }
 }
 
 /**
@@ -315,7 +341,7 @@ export async function seedNurses() {
             rate: 60,
             status: 'available',
             specialty: 'Home Care Nurse',
-            avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150&h=150',
+            avatarUrl: 'https://images.unsplash.com/photo-1536064479547-7ee40b74b807?auto=format&fit=crop&q=80&w=150&h=150',
         },
         {
             name: 'Nurse Kweku Mensah',
@@ -324,16 +350,16 @@ export async function seedNurses() {
             rate: 65,
             status: 'available',
             specialty: 'Community Health Nurse',
-            avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150',
+            avatarUrl: 'https://images.unsplash.com/photo-1622253694242-abeb37a33e97?auto=format&fit=crop&q=80&w=150&h=150',
         },
         {
-            name: 'Sister Adwoa Boateng',
+            name: 'Nurse Yaw Boateng',
             rating: 4.8,
             experience: '10 yrs',
             rate: 80,
             status: 'available',
             specialty: 'Senior Home Care Nurse',
-            avatarUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=150&h=150',
+            avatarUrl: 'https://images.unsplash.com/photo-1612531386530-97286d97c2d2?auto=format&fit=crop&q=80&w=150&h=150',
         },
     ];
     for (const n of samples) {

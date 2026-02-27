@@ -415,7 +415,7 @@ export function useRestSession({ onTriageComplete, onProfileCollected = null, la
               console.log('[useRestSession] complete_triage: no audio — generating farewell via REST');
               conversationRef.current.push({
                 role: 'user',
-                content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals at a pharmacy (free) or with a nurse (GHS 80)]',
+                content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals. Let them know you will show them the options now.]',
               });
               const farewell = await audioChat(conversationRef.current, [], TTS_VOICE);
               if (!abortRef.current && farewell.audioBase64) {
@@ -541,7 +541,7 @@ export function useRestSession({ onTriageComplete, onProfileCollected = null, la
             console.log('[useRestSession] complete_triage: no audio — generating farewell via REST');
             conversationRef.current.push({
               role: 'user',
-              content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals at a pharmacy (free) or with a nurse (GHS 80)]',
+              content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals. Let them know you will show them the options now.]',
             });
             const farewell = await audioChat(conversationRef.current, [], TTS_VOICE);
             if (!abortRef.current && farewell.audioBase64) {

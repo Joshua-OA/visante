@@ -1,15 +1,18 @@
+import { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Image,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Circle, Path, Rect, Polyline } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
+import { fetchPharmacies, fetchNurses } from '../services/firestoreService';
 
-// ─── Colors (mirrors stage-2.html) ─────────────────────────────────────────
+// ─── Colors (mirrors original doctor card) ──────────────────────────────────
 const BG = '#FEF8F5';
 const WHITE = '#FFFFFF';
 const ACCENT = '#B8595A';
@@ -19,27 +22,17 @@ const ORANGE = '#F89163';
 const ORANGE_SOFT = '#FFF2E9';
 const TEXT_DARK = '#1F2937';
 const TEXT_MUTED = '#6B7280';
-const TEXT_GRAY = '#4B5563';
 const BORDER_SOFT = '#FDF0E9';
-const TAG_BG = '#F9FAFB';
-const TAG_BORDER = '#F3F4F6';
+const GREEN = '#10b981';
+const GREEN_SOFT = '#ecfdf5';
 const STAR_BG = '#FFF9E6';
 const STAR_TEXT = '#A17614';
 const STAR_STROKE = '#B07C16';
-
-// ─── SVG Icons ─────────────────────────────────────────────────────────────
+// ─── SVG Icons ──────────────────────────────────────────────────────────────
 const BackIcon = () => (
   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#0D1C2E" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
     <Line x1="19" y1="12" x2="5" y2="12" />
     <Polyline points="12 19 5 12 12 5" />
-  </Svg>
-);
-
-const DotsIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill="#0D1C2E">
-    <Circle cx="5" cy="12" r="2.5" />
-    <Circle cx="12" cy="12" r="2.5" />
-    <Circle cx="19" cy="12" r="2.5" />
   </Svg>
 );
 
@@ -71,18 +64,32 @@ const GlobeIcon = () => (
   </Svg>
 );
 
-const VideoIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ORANGE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M23 7l-7 5 7 5V7z" />
-    <Rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+const MapPinIcon = () => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <Circle cx="12" cy="10" r="3" />
   </Svg>
 );
 
-const WalletIcon = () => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Rect x="2" y="6" width="20" height="12" rx="2" />
-    <Circle cx="12" cy="12" r="2" />
-    <Path d="M6 12h.01M18 12h.01" />
+const ClockIcon = () => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={TEXT_MUTED} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Circle cx="12" cy="12" r="10" />
+    <Polyline points="12 6 12 12 16 14" />
+  </Svg>
+);
+
+const PharmacyIcon = ({ size = 20 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 3h18v4H3z" />
+    <Path d="M3 7v13a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7" />
+    <Line x1="12" y1="11" x2="12" y2="17" />
+    <Line x1="9" y1="14" x2="15" y2="14" />
+  </Svg>
+);
+
+const CheckIcon = () => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={GREEN} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <Polyline points="20 6 9 17 4 12" />
   </Svg>
 );
 
@@ -101,19 +108,208 @@ const URGENCY = {
   emergency: { label: 'Emergency', bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
 };
 
-// ─── Main Screen ───────────────────────────────────────────────────────────
-export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment, triageSummary }) {
-  const insets = useSafeAreaInsets();
+// ─── Provider Card (doctor-card style) ──────────────────────────────────────
+function ProviderCard({
+  imageUri,
+  imageLocal,
+  fallbackIcon,
+  name,
+  role,
+  rating,
+  stat1Icon,
+  stat1Text,
+  stat2Icon,
+  stat2Text,
+  infoBg,
+  infoIcon,
+  infoLabel,
+  infoValue,
+  infoAction,
+  infoActionLabel,
+  btnLabel,
+  btnColor,
+  onPress,
+}) {
+  const hasImage = imageUri || imageLocal;
+  return (
+    <View style={styles.providerCard}>
+      {/* Decorative corner blob */}
+      <View style={styles.cardCornerBlob} />
 
-  // Derive display values from triage summary, with sensible fallbacks
-  const complaint = triageSummary?.chief_complaint ?? 'General consultation';
+      {/* Card header — profile row */}
+      <View style={styles.cardHeader}>
+        <View style={styles.profileImgContainer}>
+          {hasImage ? (
+            <Image source={imageLocal || { uri: imageUri }} style={styles.profileImg} />
+          ) : (
+            <View style={styles.profileImgPlaceholder}>
+              {fallbackIcon}
+            </View>
+          )}
+          <View style={styles.statusDot} />
+        </View>
+
+        <View style={styles.cardTitleArea}>
+          <View style={styles.nameRow}>
+            <Text style={styles.providerName} numberOfLines={1}>{name}</Text>
+            <View style={styles.ratingPill}>
+              <StarIcon />
+              <Text style={styles.ratingText}>{rating}</Text>
+            </View>
+          </View>
+          <Text style={styles.role}>{role}</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              {stat1Icon}
+              <Text style={styles.statText}>{stat1Text}</Text>
+            </View>
+            <View style={styles.statItem}>
+              {stat2Icon}
+              <Text style={styles.statText}>{stat2Text}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Info box (availability / location) */}
+      <View style={[styles.infoBox, { backgroundColor: infoBg }]}>
+        <View style={styles.infoIconBox}>
+          {infoIcon}
+        </View>
+        <View style={styles.infoContent}>
+          <Text style={styles.infoLabel}>{infoLabel}</Text>
+          <Text style={styles.infoValue}>{infoValue}</Text>
+        </View>
+        {infoAction && (
+          <TouchableOpacity style={[styles.infoActionBtn, { backgroundColor: btnColor }]} onPress={infoAction} activeOpacity={0.7}>
+            <Text style={styles.infoActionText}>{infoActionLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Confirm button */}
+      <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: btnColor, shadowColor: btnColor }]} onPress={onPress} activeOpacity={0.85}>
+        <Text style={styles.confirmBtnText}>{btnLabel}</Text>
+        <ArrowRightIcon />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Dummy fallback data (shown immediately, replaced if Firebase has data) ─
+const FALLBACK_PHARMACIES = [
+  {
+    id: 'fallback-ph-1',
+    name: 'HealthPlus Pharmacy',
+    address: 'No 14, Ring Road Central, Accra',
+    phone: '+233 30 222 1234',
+    operating_hours: '8:00 AM – 10:00 PM',
+    rating: 4.7,
+  },
+  {
+    id: 'fallback-ph-2',
+    name: 'Ernest Chemists',
+    address: 'Osu, Oxford Street, Accra',
+    operating_hours: '8:00 AM – 8:00 PM',
+    rating: 4.6,
+  },
+];
+
+// Local nurse images (Black healthcare workers)
+const NURSE_IMG_FEMALE = require('../assets/iwaria-inc-K8g07Oaguqw-unsplash.jpg');
+const NURSE_IMG_MALE_1 = require('../assets/nappy-WuYuMUnNRTI-unsplash.jpg');
+const NURSE_IMG_MALE_2 = require('../assets/nappy-K6cnVC_0RuY-unsplash.jpg');
+
+const FALLBACK_NURSES = [
+  {
+    id: 'fallback-n-1',
+    name: 'Sister Abena Osei',
+    rating: 4.9,
+    experience: '8 yrs',
+    rate: 80,
+    specialty: 'Home Care Nurse',
+    avatarLocal: NURSE_IMG_FEMALE,
+  },
+  {
+    id: 'fallback-n-2',
+    name: 'Nurse Kweku Mensah',
+    rating: 4.7,
+    experience: '5 yrs',
+    rate: 80,
+    specialty: 'Community Health Nurse',
+    avatarLocal: NURSE_IMG_MALE_1,
+  },
+  {
+    id: 'fallback-n-3',
+    name: 'Nurse Yaw Boateng',
+    rating: 4.8,
+    experience: '10 yrs',
+    rate: 80,
+    specialty: 'Senior Home Care Nurse',
+    avatarLocal: NURSE_IMG_MALE_2,
+  },
+];
+
+// ─── Main Screen ────────────────────────────────────────────────────────────
+export default function ResultsScreen({
+  onBack,
+  onSelectPharmacy,
+  onSelectNurse,
+  triageSummary,
+}) {
+  const insets = useSafeAreaInsets();
+  // Start with fallback data so cards show immediately
+  const [nurses, setNurses] = useState(FALLBACK_NURSES);
+  const [currentNurseIndex, setCurrentNurseIndex] = useState(0);
+  const [selectedPharmacy, setSelectedPharmacy] = useState(FALLBACK_PHARMACIES[0]);
+  const fadeAnim = useRef(new Animated.Value(1)).current; // visible immediately
+
+  // Derive display values from triage summary
   const recommendation = triageSummary?.ai_recommendation
-    ?? 'Based on your symptoms, we recommend a General Practitioner with immediate availability.';
+    ?? 'Based on your symptoms, we recommend visiting a nearby pharmacy or booking a nurse.';
   const urgencyKey = triageSummary?.urgency_level ?? 'moderate';
   const urgency = URGENCY[urgencyKey] ?? URGENCY.moderate;
-  const symptoms = triageSummary?.associated_symptoms ?? [];
-  // Show chief complaint as first tag, then up to 2 associated symptoms
-  const tags = [complaint, ...symptoms].slice(0, 3);
+
+  // Try to load real data from Firebase in background (silently replace fallback)
+  useEffect(() => {
+    async function loadProviders() {
+      try {
+        const [pharmaData, nurseData] = await Promise.all([
+          fetchPharmacies(),
+          fetchNurses(),
+        ]);
+        if (nurseData && nurseData.length > 0) {
+          setNurses(nurseData);
+          setCurrentNurseIndex(0);
+        }
+        if (pharmaData && pharmaData.length > 0) {
+          setSelectedPharmacy(pharmaData[0]);
+        }
+      } catch (e) {
+        // Fallback data already showing, no action needed
+        console.warn('Could not load providers from Firebase, using fallback:', e);
+      }
+    }
+    loadProviders();
+  }, []);
+
+  const currentNurse = nurses[currentNurseIndex] ?? null;
+
+  function handleShuffleNurse() {
+    if (nurses.length <= 1) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCurrentNurseIndex((prev) => (prev + 1) % nurses.length);
+  }
+
+  function handlePharmacySelect() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onSelectPharmacy && onSelectPharmacy(selectedPharmacy);
+  }
+
+  function handleNurseSelect() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onSelectNurse && onSelectNurse(currentNurse);
+  }
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -123,19 +319,13 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment,
         <TouchableOpacity style={styles.iconBtn} onPress={onBack} activeOpacity={0.7}>
           <BackIcon />
         </TouchableOpacity>
-        <Image
-          source={require('../assets/visante-blue.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
-          <DotsIcon />
-        </TouchableOpacity>
+        <Image source={require('../assets/visante-blue.png')} style={styles.logo} resizeMode="contain" />
+        <View style={styles.iconBtn} />
       </View>
 
       {/* ── Scrollable body ── */}
-      <ScrollView
-        style={styles.scroll}
+      <Animated.ScrollView
+        style={[styles.scroll, { opacity: fadeAnim }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -150,90 +340,81 @@ export default function ResultsScreen({ onBack, onConfirm, onConfirmAppointment,
 
         {/* Hero text */}
         <View style={styles.heroText}>
-          <Text style={styles.heroTitle}>We found a match</Text>
+          <Text style={styles.heroTitle}>Here's what we recommend</Text>
           <Text style={styles.heroSub}>{recommendation}</Text>
         </View>
 
-        {/* Urgency pill — driven by AI triage output */}
+        {/* Urgency pill */}
         <View style={[styles.urgencyPill, { backgroundColor: urgency.bg, borderColor: urgency.border }]}>
           <Text style={[styles.urgencyText, { color: urgency.text }]}>{urgency.label}</Text>
         </View>
 
-        {/* Provider card */}
-        <View style={styles.providerCard}>
+        {/* ── Section label ── */}
+        <Text style={styles.sectionTitle}>Choose your care option</Text>
 
-          {/* Decorative corner blob */}
-          <View style={styles.cardCornerBlob} />
+        {/* ── Pharmacy Card (doctor-card style) ── */}
+        {selectedPharmacy && (
+          <ProviderCard
+            imageUri={null}
+            fallbackIcon={<PharmacyIcon size={28} />}
+            name={selectedPharmacy.name}
+            role="Licensed Pharmacy"
+            rating={selectedPharmacy.rating ?? '4.5'}
+            stat1Icon={<MapPinIcon />}
+            stat1Text={selectedPharmacy.address ?? 'Nearby'}
+            stat2Icon={<ClockIcon />}
+            stat2Text={selectedPharmacy.operating_hours ?? 'Open now'}
+            infoBg={GREEN_SOFT}
+            infoIcon={<CheckIcon />}
+            infoLabel="VITALS CHECK"
+            infoValue="FREE — Walk in anytime"
+            btnLabel="Go to Pharmacy"
+            btnColor={ACCENT}
+            onPress={handlePharmacySelect}
+          />
+        )}
 
-          {/* Card header */}
-          <View style={styles.cardHeader}>
-            <View style={styles.profileImgContainer}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150' }}
-                style={styles.profileImg}
-              />
-              <View style={styles.statusDot} />
-            </View>
+        {/* ── Nurse Card (doctor-card style) ── */}
+        {currentNurse && (
+          <ProviderCard
+            imageUri={currentNurse.avatarUrl ?? null}
+            imageLocal={currentNurse.avatarLocal ?? null}
+            fallbackIcon={
+              <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={ORANGE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <Circle cx="12" cy="7" r="4" />
+              </Svg>
+            }
+            name={currentNurse.name}
+            role={currentNurse.specialty ?? 'Home Care Nurse'}
+            rating={currentNurse.rating ?? '4.8'}
+            stat1Icon={<BriefcaseIcon />}
+            stat1Text={`${currentNurse.experience ?? '5 yrs'} exp`}
+            stat2Icon={<GlobeIcon />}
+            stat2Text="ENGLISH, TWI"
+            infoBg={ORANGE_SOFT}
+            infoIcon={
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ORANGE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <Circle cx="12" cy="7" r="4" />
+              </Svg>
+            }
+            infoLabel="HOME VISIT"
+            infoValue={`GHS ${currentNurse.rate ?? 80}.00 / visit`}
+            infoAction={nurses.length > 1 ? handleShuffleNurse : undefined}
+            infoActionLabel="Change"
+            btnLabel="Book This Nurse"
+            btnColor={ORANGE}
+            onPress={handleNurseSelect}
+          />
+        )}
 
-            <View style={styles.cardTitleArea}>
-              <View style={styles.nameRow}>
-                <Text style={styles.providerName}>Kwame Ansah</Text>
-                <View style={styles.ratingPill}>
-                  <StarIcon />
-                  <Text style={styles.ratingText}>4.9</Text>
-                </View>
-              </View>
-              <Text style={styles.role}>Physician Assistant</Text>
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <BriefcaseIcon />
-                  <Text style={styles.statText}>12 yrs exp</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <GlobeIcon />
-                  <Text style={styles.statText}>ENGLISH, TWI</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Availability box */}
-          <View style={styles.availabilityBox}>
-            <View style={styles.iconBox}>
-              <VideoIcon />
-            </View>
-            <View style={styles.availInfo}>
-              <Text style={styles.availLabel}>NEXT AVAILABLE</Text>
-              <Text style={styles.availTime}>Today, 2:30 PM</Text>
-            </View>
-            <TouchableOpacity style={styles.changeBtn} onPress={onConfirmAppointment} activeOpacity={0.7}>
-              <Text style={styles.changeBtnText}>Change</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Symptom tags — from triage summary */}
-          <View style={styles.tagsRow}>
-            {tags.map((tag, i) => (
-              <View key={i} style={styles.tag}>
-                <Text style={styles.tagText} numberOfLines={1}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-
-        </View>
-
-        {/* Confirm button */}
-        <TouchableOpacity style={styles.confirmBtn} onPress={onConfirmAppointment} activeOpacity={0.85}>
-          <Text style={styles.confirmBtnText}>Choose Service</Text>
-          <ArrowRightIcon />
-        </TouchableOpacity>
-
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+// ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -260,68 +441,30 @@ const styles = StyleSheet.create({
   },
 
   // Scroll
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 24,
-    gap: 24,
-  },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 32, gap: 20 },
 
   // Badge
-  badgeRow: {
-    alignItems: 'center',
-    paddingTop: 8,
-  },
+  badgeRow: { alignItems: 'center', paddingTop: 8 },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: ACCENT_SOFT,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 30,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: ACCENT_SOFT, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 30,
   },
-  badgeText: {
-    color: ACCENT_TEXT,
-    fontSize: 13,
-    fontWeight: '500',
-  },
+  badgeText: { color: ACCENT_TEXT, fontSize: 13, fontWeight: '500' },
 
   // Hero text
-  heroText: {
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    gap: 12,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: TEXT_DARK,
-    textAlign: 'center',
-  },
-  heroSub: {
-    fontSize: 15,
-    color: TEXT_MUTED,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
+  heroText: { alignItems: 'center', paddingHorizontal: 8, gap: 10 },
+  heroTitle: { fontSize: 22, fontWeight: '700', color: TEXT_DARK, textAlign: 'center' },
+  heroSub: { fontSize: 14, color: TEXT_MUTED, lineHeight: 21, textAlign: 'center' },
 
   // Urgency pill
-  urgencyPill: {
-    alignSelf: 'center',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-  },
-  urgencyText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
+  urgencyPill: { alignSelf: 'center', borderWidth: 1, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 16 },
+  urgencyText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.4 },
 
-  // Provider card
+  // Section title
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: TEXT_DARK, marginTop: 4 },
+
+  // ── Provider card (doctor-card design) ──
   providerCard: {
     backgroundColor: WHITE,
     borderWidth: 2,
@@ -337,217 +480,53 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   cardCornerBlob: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 140,
-    height: 120,
-    backgroundColor: '#FEF0E6',
-    borderBottomLeftRadius: 120,
-    opacity: 0.7,
+    position: 'absolute', top: 0, right: 0, width: 140, height: 120,
+    backgroundColor: '#FEF0E6', borderBottomLeftRadius: 120, opacity: 0.7,
   },
-
-  // Card header
-  cardHeader: {
-    flexDirection: 'row',
-    gap: 16,
-    zIndex: 1,
-  },
-  profileImgContainer: {
-    width: 64,
-    height: 64,
-    position: 'relative',
-  },
-  profileImg: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+  cardHeader: { flexDirection: 'row', gap: 16, zIndex: 1 },
+  profileImgContainer: { width: 64, height: 64, position: 'relative' },
+  profileImg: { width: 64, height: 64, borderRadius: 12 },
+  profileImgPlaceholder: {
+    width: 64, height: 64, borderRadius: 12,
+    backgroundColor: ACCENT_SOFT, alignItems: 'center', justifyContent: 'center',
   },
   statusDot: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-    backgroundColor: ACCENT,
-    borderWidth: 2,
-    borderColor: WHITE,
-    borderRadius: 8,
+    position: 'absolute', bottom: -2, right: -2, width: 16, height: 16,
+    backgroundColor: ACCENT, borderWidth: 2, borderColor: WHITE, borderRadius: 8,
   },
-  cardTitleArea: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 4,
-    zIndex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  providerName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: TEXT_DARK,
-  },
+  cardTitleArea: { flex: 1, justifyContent: 'center', gap: 4, zIndex: 1 },
+  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  providerName: { fontSize: 17, fontWeight: '700', color: TEXT_DARK, flex: 1, marginRight: 8 },
   ratingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: STAR_BG,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: STAR_BG, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8,
   },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: STAR_TEXT,
-  },
-  role: {
-    fontSize: 14,
-    color: TEXT_MUTED,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 12,
-    color: TEXT_MUTED,
-    fontWeight: '500',
-  },
+  ratingText: { fontSize: 12, fontWeight: '600', color: STAR_TEXT },
+  role: { fontSize: 14, color: TEXT_MUTED },
+  statsRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  statText: { fontSize: 12, color: TEXT_MUTED, fontWeight: '500' },
 
-  // Availability box
-  availabilityBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: ORANGE_SOFT,
-    borderRadius: 12,
-    padding: 12,
-    zIndex: 1,
+  // Info box (availability / location)
+  infoBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: 12, padding: 12, zIndex: 1,
   },
-  iconBox: {
-    backgroundColor: WHITE,
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  infoIconBox: {
+    backgroundColor: WHITE, width: 36, height: 36, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
   },
-  availInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  availLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: TEXT_MUTED,
-    letterSpacing: 0.5,
-  },
-  availTime: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: TEXT_DARK,
-  },
-  changeBtn: {
-    backgroundColor: ORANGE,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-  },
-  changeBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Tags
-  tagsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    zIndex: 1,
-  },
-  tag: {
-    backgroundColor: TAG_BG,
-    borderWidth: 1,
-    borderColor: TAG_BORDER,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: TEXT_GRAY,
-  },
-
-  // Cost card
-  costCard: {
-    backgroundColor: WHITE,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 12,
-    elevation: 1,
-  },
-  costIconBox: {
-    backgroundColor: '#F3F4F6',
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  costInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  costLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: TEXT_DARK,
-  },
-  costSub: {
-    fontSize: 12,
-    color: TEXT_MUTED,
-  },
-  costPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TEXT_DARK,
-  },
+  infoContent: { flex: 1, gap: 2 },
+  infoLabel: { fontSize: 10, fontWeight: '600', color: TEXT_MUTED, letterSpacing: 0.5 },
+  infoValue: { fontSize: 14, fontWeight: '700', color: TEXT_DARK },
+  infoActionBtn: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20 },
+  infoActionText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
 
   // Confirm button
   confirmBtn: {
-    backgroundColor: ACCENT,
-    borderRadius: 12,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    elevation: 6,
+    borderRadius: 12, paddingVertical: 18,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 6,
   },
-  confirmBtnText: {
-    color: WHITE,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  confirmBtnText: { color: WHITE, fontSize: 16, fontWeight: '600' },
 });
