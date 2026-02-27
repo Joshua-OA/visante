@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -70,7 +71,7 @@ const LockIcon = () => (
 );
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
-export default function PhoneVerifyScreen({ onBack, onVerified, detectedPhone }) {
+export default function PhoneVerifyScreen({ onBack, onQuit, onVerified, detectedPhone }) {
   const insets = useSafeAreaInsets();
   // Phases: phone → sendingOtp → otp → verifying → done
   const [phase, setPhase] = useState('phone');
@@ -367,10 +368,22 @@ export default function PhoneVerifyScreen({ onBack, onVerified, detectedPhone })
           <LockIcon />
           <Text style={styles.secureText}>SECURE OTP VERIFICATION</Text>
         </View>
+
+        {onQuit && (
+          <TouchableOpacity onPress={onQuit} activeOpacity={0.7} style={{ marginTop: 8 }}>
+            <Text style={styles.quitText}>Return to Dashboard</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const ICON_WRAP_SIZE = Math.min(SCREEN_W * 0.16, 60);
+const OTP_BOX_W = Math.min(SCREEN_W * 0.15, 56);
+const OTP_BOX_H = Math.min(SCREEN_W * 0.17, 64);
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -421,8 +434,8 @@ const styles = StyleSheet.create({
   },
 
   iconWrapper: {
-    width: 60,
-    height: 60,
+    width: ICON_WRAP_SIZE,
+    height: ICON_WRAP_SIZE,
     borderRadius: 16,
     backgroundColor: '#fff5f5',
     alignItems: 'center',
@@ -487,8 +500,8 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   otpBox: {
-    width: 56,
-    height: 64,
+    width: OTP_BOX_W,
+    height: OTP_BOX_H,
     borderWidth: 2,
     borderColor: BORDER_LIGHT,
     borderRadius: 14,
@@ -560,5 +573,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     fontWeight: '600',
+  },
+  quitText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_GRAY,
+    textAlign: 'center',
   },
 });

@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useState } from 'react';
 import * as Print from 'expo-print';
@@ -13,8 +15,9 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Polyline, Path, Circle, Rect } from 'react-native-svg';
 import { saveConsultationSummary } from '../services/firestoreService';
+import { showErrorToast } from '../utils/toast';
 
-// ─── Colors (mirrors summary.html) ───────────────────────────────────────────
+// ─── Colors ─────────────────────────────────────────────────────────────────
 const BG_COLOR = '#f7f9fa';
 const TEXT_MAIN = '#1e293b';
 const TEXT_SEC = '#64748b';
@@ -26,14 +29,13 @@ const DIAG_BORDER = '#a7f3d0';
 const DIAG_TEXT = '#059669';
 const RX_BG = '#fff7ed';
 const RX_BORDER = '#ffedd5';
-const RX_ORANGE = '#d97706';
 const RX_ICON_CLR = '#c2410c';
 const STAR_YELLOW = '#fbbf24';
 const STATUS_GREEN = '#10b981';
 const BLUE_ICON = '#0ea5e9';
 const BORDER_LIGHT = '#f1f5f9';
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
+// ─── Icons ──────────────────────────────────────────────────────────────────
 const BackIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none"
     stroke={TEXT_MAIN} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -130,8 +132,54 @@ const RefreshIcon = () => (
   </Svg>
 );
 
-// ─── Medical slip HTML for PDF generation ────────────────────────────────────
-const MEDICAL_SLIP_HTML = `
+const HomeIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none"
+    stroke={TEXT_SEC} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <Polyline points="9 22 9 12 15 12 15 22" />
+  </Svg>
+);
+
+// ─── Generate verification hash for QR ──────────────────────────────────────
+function generateVerificationCode(appointmentId, sessionId) {
+  // Simple hash: combine IDs + date to create a verification string
+  const date = new Date().toISOString().split('T')[0];
+  const raw = `VISANTE-${appointmentId || 'N/A'}-${sessionId || 'N/A'}-${date}`;
+  // Create a simple checksum
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return `VIS-${Math.abs(hash).toString(36).toUpperCase().slice(0, 8)}`;
+}
+
+// ─── Build QR code URL (using free API) ─────────────────────────────────────
+function getQrCodeUrl(data) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}&margin=8`;
+}
+
+// ─── Format today's date ────────────────────────────────────────────────────
+function formatDate() {
+  const d = new Date();
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function formatTime() {
+  const d = new Date();
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${m} ${ampm}`;
+}
+
+// ─── Build medical slip HTML for PDF ────────────────────────────────────────
+function buildMedicalSlipHtml({ patientName, patientAge, patientGender, diagnosis, chiefComplaint, medications, notes, refNo, verificationCode, qrData, date }) {
+  const qrUrl = getQrCodeUrl(qrData);
+
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,141 +211,82 @@ const MEDICAL_SLIP_HTML = `
       text-align: center;
       margin-bottom: 30px;
     }
-    .red-cross {
-      font-size: 28px;
-      color: var(--red-accent);
-      margin-bottom: 12px;
-    }
+    .red-cross { font-size: 28px; color: var(--red-accent); margin-bottom: 12px; }
     .doc-title {
       font-family: var(--font-serif);
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-main);
-      letter-spacing: 1.5px;
-      line-height: 1.3;
-      margin-bottom: 8px;
+      font-size: 22px; font-weight: 700; color: var(--text-main);
+      letter-spacing: 1.5px; line-height: 1.3; margin-bottom: 8px;
     }
     .doc-subtitle {
-      font-size: 10px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      font-weight: 500;
+      font-size: 10px; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.8px; font-weight: 500;
     }
-    .doc-divider {
-      height: 2px;
-      background-color: var(--text-main);
-      margin-top: 16px;
-    }
+    .doc-divider { height: 2px; background-color: var(--text-main); margin-top: 16px; }
     .patient-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      row-gap: 20px;
-      column-gap: 16px;
-      margin: 28px 0;
+      display: grid; grid-template-columns: 1fr 1fr;
+      row-gap: 20px; column-gap: 16px; margin: 28px 0;
     }
     .info-group label {
-      display: block;
-      font-size: 10px;
-      color: var(--text-secondary);
-      font-weight: 700;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
+      display: block; font-size: 10px; color: var(--text-secondary);
+      font-weight: 700; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;
     }
-    .info-group .value {
-      font-size: 14px;
-      color: var(--text-main);
-      font-weight: 500;
-    }
-    .info-group .value.mono {
-      font-family: var(--font-mono);
-      font-size: 13px;
-      letter-spacing: -0.5px;
-    }
+    .info-group .value { font-size: 14px; color: var(--text-main); font-weight: 500; }
+    .info-group .value.mono { font-family: var(--font-mono); font-size: 13px; letter-spacing: -0.5px; }
     .section { margin-bottom: 28px; }
     .section-heading {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--red-accent);
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-light);
-      padding-bottom: 6px;
-      margin-bottom: 12px;
-      letter-spacing: 0.5px;
+      font-size: 11px; font-weight: 700; color: var(--red-accent);
+      text-transform: uppercase; border-bottom: 1px solid var(--border-light);
+      padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 0.5px;
     }
-    .diagnosis-box {
-      border: 1px solid var(--border-light);
-      padding: 16px;
-      background-color: #ffffff;
-    }
-    .diagnosis-box h3 {
-      font-family: var(--font-serif);
-      font-size: 18px;
-      color: var(--text-main);
-      margin-bottom: 6px;
-    }
-    .diagnosis-box p {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
+    .diagnosis-box { border: 1px solid var(--border-light); padding: 16px; background-color: #ffffff; }
+    .diagnosis-box h3 { font-family: var(--font-serif); font-size: 18px; color: var(--text-main); margin-bottom: 6px; }
+    .diagnosis-box p { font-size: 13px; color: var(--text-secondary); }
     .med-table { width: 100%; border-collapse: collapse; }
     .med-table th {
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-      text-align: left;
-      padding-bottom: 12px;
+      font-size: 12px; color: var(--text-secondary); font-weight: 500;
+      text-align: left; padding-bottom: 12px;
     }
     .med-table th.right, .med-table td.right { text-align: right; }
     .med-table td {
-      padding: 12px 0;
-      vertical-align: top;
-      font-size: 13px;
-      color: var(--text-main);
-      border-top: 1px solid var(--border-light);
+      padding: 12px 0; vertical-align: top; font-size: 13px;
+      color: var(--text-main); border-top: 1px solid var(--border-light);
     }
-    .med-table td.mono-col {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: #334155;
-      letter-spacing: -0.5px;
-    }
+    .med-table td.mono-col { font-family: var(--font-mono); font-size: 12px; color: #334155; letter-spacing: -0.5px; }
     .drug-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
     .drug-type { font-size: 11px; color: var(--text-secondary); }
     .notes-heading {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-light);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
+      font-size: 11px; font-weight: 700; color: var(--text-light);
+      text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;
     }
     .notes-text {
-      font-family: var(--font-serif);
-      font-style: italic;
-      font-size: 13px;
-      color: #475569;
-      line-height: 1.6;
-      margin-bottom: 20px;
-      padding-right: 20px;
+      font-family: var(--font-serif); font-style: italic; font-size: 13px;
+      color: #475569; line-height: 1.6; margin-bottom: 20px; padding-right: 20px;
     }
-    .signature {
-      font-family: var(--font-script);
-      font-size: 36px;
-      color: var(--signature-blue);
-      text-align: right;
-      margin-top: -10px;
+    .signature { font-family: var(--font-script); font-size: 36px; color: var(--signature-blue); text-align: right; margin-top: -10px; }
+
+    /* QR Code Section */
+    .qr-section {
+      margin-top: 30px; padding-top: 20px;
+      border-top: 2px dashed var(--border-light);
+      display: flex; align-items: center; gap: 20px;
     }
+    .qr-code { flex-shrink: 0; }
+    .qr-code img { width: 120px; height: 120px; }
+    .qr-info { flex: 1; }
+    .qr-title {
+      font-size: 11px; font-weight: 700; color: var(--red-accent);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .qr-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+    .qr-ref {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+      color: var(--text-main); letter-spacing: 1px;
+    }
+
     .footer-stamp {
-      margin-top: 40px;
-      border-top: 1px solid var(--border-light);
-      padding-top: 12px;
-      font-size: 10px;
-      color: var(--text-light);
-      text-align: center;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      margin-top: 30px; border-top: 1px solid var(--border-light);
+      padding-top: 12px; font-size: 10px; color: var(--text-light);
+      text-align: center; letter-spacing: 0.5px; text-transform: uppercase;
     }
   </style>
 </head>
@@ -311,90 +300,139 @@ const MEDICAL_SLIP_HTML = `
   <div class="patient-info">
     <div class="info-group">
       <label>PATIENT NAME</label>
-      <div class="value">Kwame Mensah</div>
+      <div class="value">${patientName}</div>
     </div>
     <div class="info-group">
       <label>DATE</label>
-      <div class="value mono">24 Oct 2023</div>
+      <div class="value mono">${date}</div>
     </div>
     <div class="info-group">
-      <label>DOB</label>
-      <div class="value mono">12/05/1985</div>
+      <label>AGE / GENDER</label>
+      <div class="value mono">${patientAge || 'N/A'} / ${patientGender || 'N/A'}</div>
     </div>
     <div class="info-group">
       <label>REF NO.</label>
-      <div class="value mono">#MED-23-8892</div>
+      <div class="value mono">${refNo}</div>
     </div>
   </div>
   <div class="section">
     <div class="section-heading">PRIMARY DIAGNOSIS</div>
     <div class="diagnosis-box">
-      <h3>Acute Bronchitis</h3>
-      <p>ICD-10 Code: J20.9</p>
+      <h3>${diagnosis}</h3>
+      <p>${chiefComplaint}</p>
     </div>
   </div>
   <div class="section">
     <div class="section-heading">PRESCRIBED MEDICATION</div>
     <table class="med-table">
       <thead>
-        <tr>
-          <th>Drug Name</th>
-          <th>Dosage</th>
-          <th class="right">Freq.</th>
-        </tr>
+        <tr><th>Drug Name</th><th>Dosage</th><th class="right">Freq.</th></tr>
       </thead>
       <tbody>
+        ${medications.map(m => `
         <tr>
-          <td><div class="drug-name">Benzonatate</div><div class="drug-type">Capsules</div></td>
-          <td class="mono-col">100mg</td>
-          <td class="right">3x Daily</td>
-        </tr>
-        <tr>
-          <td><div class="drug-name">Albuterol</div><div class="drug-type">Inhaler HFA</div></td>
-          <td class="mono-col">90mcg</td>
-          <td class="right">As needed</td>
-        </tr>
-        <tr>
-          <td><div class="drug-name">Amoxicillin</div><div class="drug-type">Tablet</div></td>
-          <td class="mono-col">500mg</td>
-          <td class="right">2x Daily</td>
-        </tr>
+          <td><div class="drug-name">${m.name}</div><div class="drug-type">${m.type || ''}</div></td>
+          <td class="mono-col">${m.dosage}</td>
+          <td class="right">${m.frequency}</td>
+        </tr>`).join('')}
       </tbody>
     </table>
   </div>
   <div class="section">
     <div class="notes-heading">PHYSICIAN NOTES</div>
-    <p class="notes-text">
-      "Patient advised to rest and hydrate. Monitor symptoms and return if fever persists. Avoid cold environments."
-    </p>
+    <p class="notes-text">"${notes}"</p>
     <div class="signature">Dr. Sarah</div>
   </div>
+
+  <!-- QR Code Verification Section -->
+  <div class="qr-section">
+    <div class="qr-code">
+      <img src="${qrUrl}" alt="Verification QR Code" />
+    </div>
+    <div class="qr-info">
+      <div class="qr-title">Pharmacist Verification</div>
+      <div class="qr-desc">
+        Scan this QR code to verify the authenticity of this medical slip.
+        This code is unique to this consultation and cannot be reused.
+      </div>
+      <div class="qr-ref">${verificationCode}</div>
+    </div>
+  </div>
+
   <div class="footer-stamp">✚ Encrypted &amp; HIPAA Secure &bull; Visante Telehealth Platform</div>
 </body>
 </html>
 `;
+}
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
-export default function SummaryScreen({ onBack, sessionId, provider, serviceType }) {
+// ─── Screen ─────────────────────────────────────────────────────────────────
+export default function SummaryScreen({ onBack, onGoHome, sessionId, appointmentId, provider, serviceType, userProfile, triageSummary }) {
   const insets = useSafeAreaInsets();
   const [downloading, setDownloading] = useState(false);
+
+  // Build real data from props
+  const patientName = userProfile?.name || 'Patient';
+  const patientAge = userProfile?.age || '';
+  const patientGender = userProfile?.gender || '';
+  const diagnosis = triageSummary?.ai_recommendation || triageSummary?.chief_complaint || 'General Consultation';
+  const chiefComplaint = triageSummary?.chief_complaint || 'Symptoms reported during triage';
+  const severity = triageSummary?.severity || triageSummary?.urgency_level || 'moderate';
+  const symptoms = triageSummary?.associated_symptoms || [];
+
+  const verificationCode = generateVerificationCode(appointmentId, sessionId);
+  const dateStr = formatDate();
+  const timeStr = formatTime();
+
+  // QR data contains verification info that pharmacists can scan
+  const qrData = JSON.stringify({
+    platform: 'Visante',
+    code: verificationCode,
+    appointmentId: appointmentId || null,
+    sessionId: sessionId || null,
+    patient: patientName,
+    date: new Date().toISOString(),
+    valid: true,
+  });
+  const qrImageUrl = getQrCodeUrl(qrData);
+
+  // Placeholder medications (in production, doctor fills these during consultation)
+  const medications = [
+    { name: 'Paracetamol', type: 'Tablet', dosage: '500mg', frequency: '3x Daily' },
+    { name: 'Ibuprofen', type: 'Tablet', dosage: '400mg', frequency: 'As needed' },
+  ];
+
+  const notes = `Patient presented with ${chiefComplaint}. Severity assessed as ${severity}. Advised to rest, stay hydrated, and monitor symptoms. Return if condition worsens.`;
+
+  const refNo = `#MED-${new Date().getFullYear().toString().slice(-2)}-${(appointmentId || sessionId || 'XXXX').slice(-4).toUpperCase()}`;
 
   async function handleDownload() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setDownloading(true);
     try {
-      // Save summary to Firestore
       if (sessionId) {
         await saveConsultationSummary(sessionId, {
           providerName: provider?.name ?? 'Unknown',
           serviceType: serviceType ?? 'unknown',
+          verificationCode,
           downloadedAt: new Date().toISOString(),
         });
       }
-      const { uri } = await Print.printToFileAsync({
-        html: MEDICAL_SLIP_HTML,
-        base64: false,
+
+      const html = buildMedicalSlipHtml({
+        patientName,
+        patientAge,
+        patientGender,
+        diagnosis,
+        chiefComplaint,
+        medications,
+        notes,
+        refNo,
+        verificationCode,
+        qrData,
+        date: dateStr,
       });
+
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
         await Sharing.shareAsync(uri, {
@@ -404,7 +442,10 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
         });
       }
     } catch (e) {
-      // silently fail — user cancelled or device unsupported
+      // User may have cancelled sharing — only show toast for real errors
+      if (e?.message && !e.message.includes('cancel')) {
+        showErrorToast(e, 'Download Issue');
+      }
     } finally {
       setDownloading(false);
     }
@@ -413,14 +454,14 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
 
-      {/* Header — white card with border, matches summary.html */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.iconBtn}>
           <BackIcon />
         </TouchableOpacity>
         <View style={styles.titleBlock}>
           <Text style={styles.headerTitle}>Consultation Summary</Text>
-          <Text style={styles.headerSubtitle}>OCT 24, 2023 • 10:30 AM</Text>
+          <Text style={styles.headerSubtitle}>{dateStr} • {timeStr}</Text>
         </View>
         <TouchableOpacity activeOpacity={0.7} style={styles.iconBtn}>
           <ShareIcon />
@@ -430,7 +471,7 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
       {/* Scrollable content */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: 110 + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 130 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
 
@@ -441,13 +482,13 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
             <View style={styles.statusIndicator} />
           </View>
           <View style={styles.doctorInfo}>
-            <Text style={styles.doctorName}>Dr. Sarah Jensen</Text>
+            <Text style={styles.doctorName}>Dr. Sarah Mitchell</Text>
             <Text style={styles.doctorSpecialty}>General Practitioner</Text>
             <View style={styles.doctorStats}>
               <Text style={styles.starIcon}>★</Text>
               <Text style={styles.ratingText}>4.9</Text>
               <Text style={styles.statsDot}> • </Text>
-              <Text style={styles.sessionText}>15 min session</Text>
+              <Text style={styles.sessionText}>Video Consultation</Text>
             </View>
           </View>
         </View>
@@ -458,17 +499,24 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
           <Text style={styles.sectionTitle}>DIAGNOSIS</Text>
         </View>
         <View style={styles.diagnosisCard}>
-          <Text style={styles.diagnosisTitle}>Acute Bronchitis</Text>
-          <Text style={styles.diagnosisDesc}>
-            Inflammation of the lining of your bronchial tubes, which carry air to and from your lungs. Likely viral in origin given the symptoms.
-          </Text>
-          <View style={styles.tagsContainer}>
-            {['Cough', 'Fatigue', 'Mild Fever'].map(tag => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={styles.diagnosisTitle}>{diagnosis}</Text>
+          <Text style={styles.diagnosisDesc}>{chiefComplaint}</Text>
+          {symptoms.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {symptoms.map(tag => (
+                <View key={tag} style={styles.tag}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {severity && (
+            <View style={[styles.severityBadge, severity === 'high' ? styles.severityHigh : severity === 'low' ? styles.severityLow : styles.severityMod]}>
+              <Text style={[styles.severityText, severity === 'high' ? styles.severityTextHigh : severity === 'low' ? styles.severityTextLow : styles.severityTextMod]}>
+                Severity: {severity}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Prescriptions section */}
@@ -477,20 +525,19 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
           <Text style={styles.sectionTitle}>PRESCRIPTIONS</Text>
         </View>
         <View style={styles.prescriptionsCard}>
-          {/* Rx item 1 */}
           <View style={styles.rxItem}>
             <View style={styles.rxIconBox}>
               <BottleIcon />
             </View>
             <View style={styles.rxContent}>
               <View style={styles.rxHeaderRow}>
-                <Text style={styles.rxName}>Benzonatate</Text>
+                <Text style={styles.rxName}>Paracetamol</Text>
                 <View style={styles.rxDosageBadge}>
-                  <Text style={styles.rxDosageText}>100mg</Text>
+                  <Text style={styles.rxDosageText}>500mg</Text>
                 </View>
               </View>
               <Text style={styles.rxInstructions}>
-                Take 1 capsule by mouth three times daily as needed for cough.
+                Take 1 tablet by mouth three times daily as needed.
               </Text>
               <View style={styles.rxRefills}>
                 <RefreshIcon />
@@ -501,20 +548,19 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
 
           <View style={styles.rxDivider} />
 
-          {/* Rx item 2 */}
           <View style={styles.rxItem}>
             <View style={styles.rxIconBox}>
               <InboxIcon />
             </View>
             <View style={styles.rxContent}>
               <View style={styles.rxHeaderRow}>
-                <Text style={styles.rxName}>Albuterol Inhaler</Text>
+                <Text style={styles.rxName}>Ibuprofen</Text>
                 <View style={styles.rxDosageBadge}>
-                  <Text style={styles.rxDosageText}>90mcg</Text>
+                  <Text style={styles.rxDosageText}>400mg</Text>
                 </View>
               </View>
               <Text style={styles.rxInstructions}>
-                2 puffs every 4–6 hours as needed for wheezing.
+                Take as needed for pain, with food. Max 3 per day.
               </Text>
             </View>
           </View>
@@ -523,9 +569,34 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
         {/* Care plan section */}
         <View style={styles.sectionHeader}>
           <ClipboardIcon />
-          <Text style={styles.sectionTitle}>CARE PLAN</Text>
+          <Text style={styles.sectionTitle}>PHYSICIAN NOTES</Text>
         </View>
-        <View style={styles.carePlanCard} />
+        <View style={styles.notesCard}>
+          <Text style={styles.notesText}>{notes}</Text>
+        </View>
+
+        {/* QR Code Verification Section */}
+        <View style={styles.qrSection}>
+          <View style={styles.qrHeader}>
+            <Text style={styles.qrTitle}>PHARMACIST VERIFICATION</Text>
+          </View>
+          <View style={styles.qrBody}>
+            <Image
+              source={{ uri: qrImageUrl }}
+              style={styles.qrImage}
+              resizeMode="contain"
+            />
+            <View style={styles.qrInfo}>
+              <Text style={styles.qrDesc}>
+                Scan this QR code to verify the authenticity of this medical slip.
+              </Text>
+              <View style={styles.qrCodeBadge}>
+                <Text style={styles.qrCodeText}>{verificationCode}</Text>
+              </View>
+              <Text style={styles.qrRef}>Ref: {refNo}</Text>
+            </View>
+          </View>
+        </View>
 
       </ScrollView>
 
@@ -546,6 +617,10 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
             </>
           )}
         </TouchableOpacity>
+        <TouchableOpacity style={styles.goHomeBtn} onPress={() => onGoHome && onGoHome()} activeOpacity={0.7}>
+          <HomeIcon />
+          <Text style={styles.goHomeText}>Back to Dashboard</Text>
+        </TouchableOpacity>
         <View style={styles.secureBadge}>
           <LockIcon />
           <Text style={styles.secureText}> ENCRYPTED & HIPAA SECURE</Text>
@@ -556,7 +631,13 @@ export default function SummaryScreen({ onBack, sessionId, provider, serviceType
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const DOCTOR_AVATAR = Math.min(SCREEN_W * 0.15, 56);
+const QR_SIZE = Math.min(SCREEN_W * 0.26, 100);
+const RX_ICON_SIZE = Math.min(SCREEN_W * 0.13, 48);
+
+// ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -616,9 +697,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   doctorAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: DOCTOR_AVATAR,
+    height: DOCTOR_AVATAR,
+    borderRadius: DOCTOR_AVATAR / 2,
     backgroundColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -713,6 +794,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 12,
   },
   tag: {
     backgroundColor: WHITE,
@@ -726,6 +808,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: DIAG_TEXT,
+  },
+  severityBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  severityMod: {
+    backgroundColor: '#fff7ed',
+  },
+  severityHigh: {
+    backgroundColor: '#fef2f2',
+  },
+  severityLow: {
+    backgroundColor: '#ecfdf5',
+  },
+  severityText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  severityTextMod: {
+    color: '#d97706',
+  },
+  severityTextHigh: {
+    color: '#dc2626',
+  },
+  severityTextLow: {
+    color: '#059669',
   },
 
   // Prescriptions card
@@ -747,8 +858,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   rxIconBox: {
-    width: 48,
-    height: 48,
+    width: RX_ICON_SIZE,
+    height: RX_ICON_SIZE,
     backgroundColor: WHITE,
     borderRadius: 12,
     alignItems: 'center',
@@ -803,11 +914,84 @@ const styles = StyleSheet.create({
     color: '#ea580c',
   },
 
-  // Care plan stub
-  carePlanCard: {
+  // Notes card
+  notesCard: {
     backgroundColor: WHITE,
     borderRadius: 16,
-    height: 60,
+    padding: 20,
+    marginBottom: 24,
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 22,
+    fontStyle: 'italic',
+  },
+
+  // QR Code section
+  qrSection: {
+    backgroundColor: WHITE,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  qrHeader: {
+    backgroundColor: '#fef2f2',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#fecaca',
+  },
+  qrTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b91c1c',
+    letterSpacing: 0.8,
+  },
+  qrBody: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 16,
+    alignItems: 'center',
+  },
+  qrImage: {
+    width: QR_SIZE,
+    height: QR_SIZE,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+  },
+  qrInfo: {
+    flex: 1,
+    gap: 8,
+  },
+  qrDesc: {
+    fontSize: 12,
+    color: TEXT_SEC,
+    lineHeight: 18,
+  },
+  qrCodeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: BORDER_LIGHT,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  qrCodeText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: TEXT_MAIN,
+    letterSpacing: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  qrRef: {
+    fontSize: 11,
+    color: TEXT_TERT,
+    fontWeight: '500',
   },
 
   // Footer
@@ -818,7 +1002,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: BG_COLOR,
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 16,
   },
   downloadBtn: {
     backgroundColor: BTN_RED,
@@ -828,7 +1012,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
     shadowColor: BTN_RED,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -842,6 +1026,19 @@ const styles = StyleSheet.create({
     color: WHITE,
     fontSize: 15,
     fontWeight: '600',
+  },
+  goHomeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  goHomeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_SEC,
   },
   secureBadge: {
     flexDirection: 'row',

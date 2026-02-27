@@ -7,6 +7,7 @@ import {
   Image,
   Animated,
   Easing,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -432,6 +433,14 @@ export default function NurseMatchingScreen({
   );
 }
 
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const PULSE_SIZE = Math.min(SCREEN_W * 0.36, 140);
+const PULSE_CENTER = Math.min(SCREEN_W * 0.21, 80);
+const STATUS_CIRCLE = Math.min(SCREEN_W * 0.23, 90);
+const AVATAR_SIZE = Math.min(SCREEN_W * 0.14, 52);
+const ETA_ICON = Math.min(SCREEN_W * 0.13, 48);
+
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BG_MAIN },
@@ -463,14 +472,14 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: TEXT_GRAY, marginBottom: 30, textAlign: 'center', lineHeight: 20 },
 
   // Pulse animation
-  pulseContainer: { width: 140, height: 140, alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
-  pulseRing: { position: 'absolute', width: 140, height: 140, borderRadius: 70, borderWidth: 2 },
-  pulseRing2: { position: 'absolute', width: 120, height: 120, borderRadius: 60, borderWidth: 1.5 },
-  pulseCenter: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  pulseContainer: { width: PULSE_SIZE, height: PULSE_SIZE, alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
+  pulseRing: { position: 'absolute', width: PULSE_SIZE, height: PULSE_SIZE, borderRadius: PULSE_SIZE / 2, borderWidth: 2 },
+  pulseRing2: { position: 'absolute', width: PULSE_SIZE * 0.86, height: PULSE_SIZE * 0.86, borderRadius: PULSE_SIZE * 0.43, borderWidth: 1.5 },
+  pulseCenter: { width: PULSE_CENTER, height: PULSE_CENTER, borderRadius: PULSE_CENTER / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 
   // Status icon
   statusIconWrapper: { marginBottom: 24 },
-  statusCircle: { width: 90, height: 90, borderRadius: 45, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  statusCircle: { width: STATUS_CIRCLE, height: STATUS_CIRCLE, borderRadius: STATUS_CIRCLE / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 
   // Profile card
   profileCard: {
@@ -480,8 +489,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 15, elevation: 2,
   },
   avatarContainer: { position: 'relative', marginRight: 14 },
-  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#e2e8f0' },
-  avatarPlaceholder: { width: 52, height: 52, borderRadius: 26, backgroundColor: PRIMARY_RED + '18', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2, backgroundColor: '#e2e8f0' },
+  avatarPlaceholder: { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2, backgroundColor: PRIMARY_RED + '18', alignItems: 'center', justifyContent: 'center' },
   avatarInitials: { fontSize: 16, fontWeight: '700', color: PRIMARY_RED },
   dotIndicator: { position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: CARD_BG },
   profileInfo: { flex: 1 },
@@ -501,7 +510,7 @@ const styles = StyleSheet.create({
     borderRadius: 14, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16,
   },
   etaIconBox: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: CARD_BG,
+    width: ETA_ICON, height: ETA_ICON, borderRadius: ETA_ICON / 2, backgroundColor: CARD_BG,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8,
   },

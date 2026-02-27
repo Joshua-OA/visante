@@ -7,6 +7,7 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -143,7 +144,7 @@ const ShieldIcon = () => (
 );
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
-export default function PaymentScreen({ onBack, onPay, phoneNumber, amount, selectedService, provider, appointmentId }) {
+export default function PaymentScreen({ onBack, onQuit, onPay, phoneNumber, amount, selectedService, provider, appointmentId }) {
   const insets = useSafeAreaInsets();
   const detectedId = detectProvider(phoneNumber);
   const [selected, setSelected] = useState(detectedId || 'mtn');
@@ -332,6 +333,11 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber, amount, sele
           <ShieldIcon />
           <Text style={styles.securityText}>BANK-LEVEL SECURITY ENCRYPTED</Text>
         </View>
+        {onQuit && (
+          <TouchableOpacity onPress={onQuit} activeOpacity={0.7} style={styles.quitBtn}>
+            <Text style={styles.quitBtnText}>Return to Dashboard</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* ── Change-number verification modal ── */}
@@ -402,6 +408,12 @@ export default function PaymentScreen({ onBack, onPay, phoneNumber, amount, sele
   );
 }
 
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const LOCK_SIZE = Math.min(SCREEN_W * 0.13, 50);
+const LOGO_SIZE = Math.min(SCREEN_W * 0.11, 42);
+const MODAL_LOGO_SIZE = Math.min(SCREEN_W * 0.14, 52);
+
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
@@ -453,9 +465,9 @@ const styles = StyleSheet.create({
   },
 
   lockWrapper: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: LOCK_SIZE,
+    height: LOCK_SIZE,
+    borderRadius: LOCK_SIZE / 2,
     backgroundColor: ICON_BG,
     alignItems: 'center',
     justifyContent: 'center',
@@ -593,8 +605,8 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 42,
-    height: 42,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -700,8 +712,8 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   modalLogo: {
-    width: 52,
-    height: 52,
+    width: MODAL_LOGO_SIZE,
+    height: MODAL_LOGO_SIZE,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -792,5 +804,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: BG_WHITE,
+  },
+  quitBtn: {
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginTop: 4,
+  },
+  quitBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: TEXT_GRAY,
   },
 });

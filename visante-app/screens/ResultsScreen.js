@@ -6,11 +6,13 @@ import {
   TouchableOpacity,
   Image,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Circle, Path, Rect, Polyline } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { fetchPharmacies, fetchNurses } from '../services/firestoreService';
+import { showErrorToast } from '../utils/toast';
 
 // ─── Colors (mirrors original doctor card) ──────────────────────────────────
 const BG = '#FEF8F5';
@@ -253,6 +255,7 @@ const FALLBACK_NURSES = [
 // ─── Main Screen ────────────────────────────────────────────────────────────
 export default function ResultsScreen({
   onBack,
+  onQuit,
   onSelectPharmacy,
   onSelectNurse,
   triageSummary,
@@ -286,8 +289,8 @@ export default function ResultsScreen({
           setSelectedPharmacy(pharmaData[0]);
         }
       } catch (e) {
-        // Fallback data already showing, no action needed
         console.warn('Could not load providers from Firebase, using fallback:', e);
+        showErrorToast(e, 'Couldn\'t Load Providers');
       }
     }
     loadProviders();
@@ -409,10 +412,22 @@ export default function ResultsScreen({
           />
         )}
 
+        {/* Quit to dashboard */}
+        {onQuit && (
+          <TouchableOpacity style={styles.quitBtn} onPress={onQuit} activeOpacity={0.7}>
+            <Text style={styles.quitBtnText}>Back to Dashboard</Text>
+          </TouchableOpacity>
+        )}
+
       </Animated.ScrollView>
     </View>
   );
 }
+
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const PROFILE_IMG_SIZE = Math.min(SCREEN_W * 0.17, 64);
+const INFO_ICON_SIZE = Math.min(SCREEN_W * 0.1, 36);
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -484,10 +499,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF0E6', borderBottomLeftRadius: 120, opacity: 0.7,
   },
   cardHeader: { flexDirection: 'row', gap: 16, zIndex: 1 },
-  profileImgContainer: { width: 64, height: 64, position: 'relative' },
-  profileImg: { width: 64, height: 64, borderRadius: 12 },
+  profileImgContainer: { width: PROFILE_IMG_SIZE, height: PROFILE_IMG_SIZE, position: 'relative' },
+  profileImg: { width: PROFILE_IMG_SIZE, height: PROFILE_IMG_SIZE, borderRadius: 12 },
   profileImgPlaceholder: {
-    width: 64, height: 64, borderRadius: 12,
+    width: PROFILE_IMG_SIZE, height: PROFILE_IMG_SIZE, borderRadius: 12,
     backgroundColor: ACCENT_SOFT, alignItems: 'center', justifyContent: 'center',
   },
   statusDot: {
@@ -513,7 +528,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 12, zIndex: 1,
   },
   infoIconBox: {
-    backgroundColor: WHITE, width: 36, height: 36, borderRadius: 10,
+    backgroundColor: WHITE, width: INFO_ICON_SIZE, height: INFO_ICON_SIZE, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center',
   },
   infoContent: { flex: 1, gap: 2 },
@@ -529,4 +544,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 6,
   },
   confirmBtnText: { color: WHITE, fontSize: 16, fontWeight: '600' },
+
+  // Quit button
+  quitBtn: { alignItems: 'center', paddingVertical: 12 },
+  quitBtnText: { color: TEXT_MUTED, fontSize: 14, fontWeight: '600' },
 });

@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.visante.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -24,6 +25,21 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "openaiApiKey": "",
+      "vapiPublicKey": "",
+      "ghananlpApiKey": "",
+      "wsAudioProxyUrl": "",
+      "firebaseApiKey": "",
+      "firebaseAuthDomain": "",
+      "firebaseProjectId": "",
+      "firebaseStorageBucket": "",
+      "firebaseMessagingSenderId": "",
+      "firebaseAppId": "",
+      "eas": {
+        "projectId": "be014bab-c5cb-4ddb-b0de-807342204049"
+      }
     }
   }
 }

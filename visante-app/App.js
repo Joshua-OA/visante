@@ -14,6 +14,7 @@ import NurseMatchingScreen from './screens/NurseMatchingScreen';
 import PharmacyCodeScreen from './screens/PharmacyCodeScreen';
 import WaitingScreen from './screens/WaitingScreen';
 import VideoScreen from './screens/VideoScreen';
+import ChatScreen from './screens/ChatScreen';
 import SummaryScreen from './screens/SummaryScreen';
 import DashboardScreen from './screens/DashboardScreen';
 
@@ -112,6 +113,12 @@ export default function App() {
     loadProfile();
   }, [phoneNumber]);
 
+  // ── Global quit: return to dashboard from anywhere ──
+  function handleQuit() {
+    console.log('[App] handleQuit: returning to dashboard');
+    setScreen('dashboard');
+  }
+
   // ── Save triage to Firestore when results are shown ──
   async function handleTriageComplete(summary) {
     console.log('[App] handleTriageComplete: summary =', JSON.stringify(summary));
@@ -132,6 +139,8 @@ export default function App() {
   }
 
   // ── Pharmacy selected — show code screen (give code to MCA) ──
+  // Pharmacy flow: Triage → Results → PharmacyCode (wait for vitals) → Summary
+  // No video/waiting room — user physically goes to the pharmacy
   async function handleSelectPharmacy(pharmacy) {
     console.log('[App] handleSelectPharmacy:', pharmacy?.name, '| sessionId =', sessionId);
     setSelectedService('pharmacy');
@@ -166,6 +175,8 @@ export default function App() {
   }
 
   // ── Nurse selected — instant booking (like Uber), go straight to matching ──
+  // Nurse flow: Triage → Results → NurseMatching → PhoneVerify → Payment → Summary
+  // No video/waiting room — nurse comes to you physically
   async function handleSelectNurse(nurse) {
     console.log('[App] handleSelectNurse:', nurse?.name, '| rate =', nurse?.rate, '| sessionId =', sessionId);
     setSelectedService('nurse');
@@ -199,30 +210,33 @@ export default function App() {
     setScreen('nurseMatching');
   }
 
-  // ── After vitals complete, proceed to phone verify → payment → waiting room ──
-  function handleVitalsComplete() {
-    console.log('[App] handleVitalsComplete: → phoneVerify');
+  // ── After nurse vitals complete, proceed to phone verify → payment → summary ──
+  function handleNurseVitalsComplete() {
+    console.log('[App] handleNurseVitalsComplete: → phoneVerify');
     setScreen('phoneVerify');
   }
 
-  // ── After payment, go to waiting room for doctor consultation ──
+  // ── After payment, go straight to summary (no video for nurse flow) ──
   function handlePaymentComplete() {
-    console.log('[App] handlePaymentComplete: → waiting');
+    console.log('[App] handlePaymentComplete: → summary');
+    setScreen('summary');
+  }
+
+  // ── Pharmacy vitals complete → go to waiting room for doctor video ──
+  function handlePharmacyVitalsComplete() {
+    console.log('[App] handlePharmacyVitalsComplete: → waiting (for doctor consultation)');
     setScreen('waiting');
   }
 
   // ── View last appointment from dashboard — navigate back to its last step ──
   function handleViewLastAppointment(appointment) {
     console.log('[App] handleViewLastAppointment:', JSON.stringify({ id: appointment.id, providerType: appointment.providerType, status: appointment.status }));
-    // If the appointment service type was pharmacy, take user to results to choose between pharmacy/nurse
-    // If it was nurse, same — take to results screen so they can re-choose
     setScreen('results');
   }
 
-  // ── Profile icon tapped — for now start a new triage (could later open a profile screen) ──
+  // ── Profile icon tapped ──
   function handleViewProfile() {
     console.log('[App] handleViewProfile: showing profile info');
-    // Navigate to home (triage) for now — in future this could be a dedicated profile screen
     setScreen('home');
   }
 
@@ -237,8 +251,15 @@ export default function App() {
     });
     const isVitalsReady = booking.status === 'vitals_complete' || booking.status === 'consultation_ready';
     if (isVitalsReady) {
-      console.log('[App] handleViewActiveBooking: → waiting (vitals ready)');
-      setScreen('waiting');
+      // Only pharmacy flow goes through waiting room for doctor
+      if (booking.providerType === 'pharmacy') {
+        console.log('[App] handleViewActiveBooking: → waiting (vitals ready, pharmacy flow)');
+        setScreen('waiting');
+      } else {
+        // Nurse flow goes straight to summary after vitals
+        console.log('[App] handleViewActiveBooking: → summary (vitals ready, nurse flow)');
+        setScreen('summary');
+      }
     } else if (booking.providerType === 'pharmacy') {
       console.log('[App] handleViewActiveBooking: → pharmacyCode');
       setScreen('pharmacyCode');
@@ -275,14 +296,11 @@ export default function App() {
           onProfileCollected={async (profile) => {
             console.log('[App] onProfileCollected:', JSON.stringify(profile));
             console.log('[App] onProfileCollected: phoneNumber =', phoneNumber || '(empty)');
-            // If phone is already known, profile is saved in the hook.
-            // Otherwise stash it so we can save after phone verification.
             if (!phoneNumber) {
               pendingProfileRef.current = profile;
               console.log('[App] onProfileCollected: stashed in pendingProfileRef (no phone yet)');
             }
             setUserProfile(profile);
-            // Persist profile locally so the app can resume to dashboard on reload
             try {
               await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
               console.log('[App] onProfileCollected: saved to AsyncStorage');
@@ -298,28 +316,32 @@ export default function App() {
         <ResultsScreen
           triageSummary={triageSummary}
           onBack={() => setScreen('home')}
+          onQuit={handleQuit}
           onSelectPharmacy={handleSelectPharmacy}
           onSelectNurse={handleSelectNurse}
         />
       )}
 
       {/* ── Pharmacy code screen (give code to MCA) ── */}
+      {/* After vitals, pharmacy flow goes to waiting room for doctor video */}
       {screen === 'pharmacyCode' && (
         <PharmacyCodeScreen
           onBack={() => setScreen('results')}
-          onGoToDashboard={() => setScreen('dashboard')}
+          onGoToDashboard={handleQuit}
+          onVitalsComplete={handlePharmacyVitalsComplete}
           pharmacy={selectedProvider}
           appointmentId={appointmentId}
         />
       )}
 
       {/* ── Nurse matching (Uber-like: on her way → arrived → vitals) ── */}
+      {/* After vitals complete, nurse flow goes to phone verify → payment → summary */}
       {screen === 'nurseMatching' && (
         <NurseMatchingScreen
           onBack={() => setScreen('results')}
-          onCancel={() => setScreen('dashboard')}
-          onGoToDashboard={() => setScreen('dashboard')}
-          onConsultDoctor={handleVitalsComplete}
+          onCancel={handleQuit}
+          onGoToDashboard={handleQuit}
+          onConsultDoctor={handleNurseVitalsComplete}
           appointmentId={appointmentId}
           provider={selectedProvider}
         />
@@ -329,6 +351,7 @@ export default function App() {
       {screen === 'phoneVerify' && (
         <PhoneVerifyScreen
           onBack={() => setScreen('nurseMatching')}
+          onQuit={handleQuit}
           onVerified={async (num) => {
             console.log('[App] onVerified: phone =', num);
             setPhoneNumber(num);
@@ -364,10 +387,11 @@ export default function App() {
         />
       )}
 
-      {/* ── Payment (for doctor consultation) ── */}
+      {/* ── Payment (for nurse service) ── */}
       {screen === 'payment' && (
         <PaymentScreen
           onBack={() => setScreen('phoneVerify')}
+          onQuit={handleQuit}
           onPay={handlePaymentComplete}
           phoneNumber={phoneNumber}
           amount={serviceAmount}
@@ -377,33 +401,55 @@ export default function App() {
         />
       )}
 
-      {/* ── Waiting room (for video consultation) ── */}
+      {/* ── Waiting room (ONLY for doctor video consultation — pharmacy flow) ── */}
       {screen === 'waiting' && (
         <WaitingScreen
-          onBack={() => setScreen('payment')}
-          onCheckConnection={() => setScreen('video')}
-          onCancel={() => setScreen('dashboard')}
-          onJoin={() => setScreen('video')}
+          onBack={() => setScreen(selectedService === 'pharmacy' ? 'pharmacyCode' : 'dashboard')}
+          onJoinVideo={() => setScreen('video')}
+          onJoinChat={() => setScreen('chat')}
+          onCancel={handleQuit}
           appointmentId={appointmentId}
           provider={selectedProvider}
           serviceType={selectedService}
+          userProfile={userProfile}
+          triageSummary={triageSummary}
         />
       )}
 
-      {/* ── Video ── */}
+      {/* ── Video (doctor consultation only) ── */}
       {screen === 'video' && (
         <VideoScreen
           onEnd={() => setScreen('summary')}
+          onQuit={handleQuit}
+          appointmentId={appointmentId}
+          userProfile={userProfile}
+          triageSummary={triageSummary}
+        />
+      )}
+
+      {/* ── Text chat (fallback when doctor is unavailable for video) ── */}
+      {screen === 'chat' && (
+        <ChatScreen
+          onEnd={() => setScreen('summary')}
+          onQuit={handleQuit}
+          appointmentId={appointmentId}
+          provider={selectedProvider}
+          userProfile={userProfile}
+          triageSummary={triageSummary}
         />
       )}
 
       {/* ── Summary ── */}
       {screen === 'summary' && (
         <SummaryScreen
-          onBack={() => setScreen('video')}
+          onBack={handleQuit}
+          onGoHome={handleQuit}
           sessionId={sessionId}
+          appointmentId={appointmentId}
           provider={selectedProvider}
           serviceType={selectedService}
+          userProfile={userProfile}
+          triageSummary={triageSummary}
         />
       )}
 

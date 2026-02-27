@@ -112,6 +112,65 @@ export async function audioChat(messages, tools, voice = 'alloy') {
 }
 
 /**
+ * Text-only Chat Completions call (no audio in/out).
+ * Used when the user types their symptoms instead of speaking.
+ *
+ * @param {Array}  messages  Standard messages array [{role, content}, …]
+ * @param {Array}  tools     Tool definitions
+ * @returns {Promise<{ transcript: string|null, toolCall: object|null }>}
+ */
+export async function textChat(messages, tools) {
+  const apiKey = getApiKey();
+
+  const body = {
+    model: 'gpt-4o-mini',
+    messages,
+  };
+
+  if (tools?.length) {
+    body.tools = tools.map((t) => ({
+      type: 'function',
+      function: { name: t.name, description: t.description, parameters: t.parameters },
+    }));
+    body.tool_choice = 'auto';
+  }
+
+  console.log('[restApi] textChat: sending request — messages:', messages.length, 'tools:', tools?.length ?? 0);
+
+  const res = await fetch(`${API_BASE}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  console.log('[restApi] textChat: response status =', res.status);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error('[restApi] textChat: API error:', JSON.stringify(err));
+    throw new Error(err.error?.message ?? `Chat API error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  const msg = data.choices?.[0]?.message;
+
+  let toolCall = null;
+  if (msg?.tool_calls?.length > 0) {
+    const tc = msg.tool_calls[0];
+    toolCall = { id: tc.id, name: tc.function.name, arguments: tc.function.arguments };
+    console.log('[restApi] textChat: tool call:', tc.function.name);
+  }
+
+  return {
+    transcript: msg?.content ?? null,
+    toolCall,
+  };
+}
+
+/**
  * Transcribe audio using OpenAI's Whisper API.
  * Used on Android where expo-av cannot produce valid WAV files.
  *

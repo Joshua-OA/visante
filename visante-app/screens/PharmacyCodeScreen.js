@@ -7,10 +7,12 @@ import {
   Image,
   Animated,
   Easing,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Polyline, Circle, Path, Rect } from 'react-native-svg';
+import { subscribeToAppointment } from '../services/firestoreService';
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
 const BG = '#FEF8F5';
@@ -90,6 +92,7 @@ function generateCode(appointmentId) {
 export default function PharmacyCodeScreen({
   onBack,
   onGoToDashboard,
+  onVitalsComplete,
   pharmacy,
   appointmentId,
 }) {
@@ -97,6 +100,8 @@ export default function PharmacyCodeScreen({
   const code = useRef(generateCode(appointmentId)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [vitalsReady, setVitalsReady] = useState(false);
+  const [appointment, setAppointment] = useState(null);
 
   const pharmacyName = pharmacy?.name ?? 'Your Pharmacy';
   const pharmacyAddress = pharmacy?.address ?? 'Nearby location';
@@ -108,6 +113,19 @@ export default function PharmacyCodeScreen({
       Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  // Listen for vitals_complete from Firestore (MCA submits vitals)
+  useEffect(() => {
+    if (!appointmentId) return;
+    const unsub = subscribeToAppointment(appointmentId, (appt) => {
+      setAppointment(appt);
+      if (appt.status === 'vitals_complete' || appt.status === 'consultation_ready') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setVitalsReady(true);
+      }
+    });
+    return unsub;
+  }, [appointmentId]);
 
   function handleGoToDashboard() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -181,17 +199,36 @@ export default function PharmacyCodeScreen({
 
       </View>
 
+      {/* Vitals ready banner */}
+      {vitalsReady && appointment?.vitals && (
+        <View style={styles.vitalsReadyBanner}>
+          <CheckIcon />
+          <Text style={styles.vitalsReadyText}>Vitals recorded — ready for doctor</Text>
+        </View>
+      )}
+
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity style={styles.btnDashboard} onPress={handleGoToDashboard} activeOpacity={0.85}>
-          <HomeIcon />
-          <Text style={styles.btnDashboardText}>Go to Dashboard</Text>
-        </TouchableOpacity>
+        {vitalsReady ? (
+          <TouchableOpacity style={styles.btnProceed} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onVitalsComplete && onVitalsComplete(); }} activeOpacity={0.85}>
+            <Text style={styles.btnProceedText}>Proceed to Waiting Room</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.btnDashboard} onPress={handleGoToDashboard} activeOpacity={0.85}>
+            <HomeIcon />
+            <Text style={styles.btnDashboardText}>Go to Dashboard</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
     </View>
   );
 }
+
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const CODE_BOX_SIZE = Math.floor((SCREEN_W - 48 - 48 - 40) / 6); // 6 boxes with gaps and padding
+const ICON_CIRCLE = Math.min(SCREEN_W * 0.25, 100);
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -229,9 +266,9 @@ const styles = StyleSheet.create({
 
   // Pharmacy icon circle
   pharmacyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: ICON_CIRCLE,
+    height: ICON_CIRCLE,
+    borderRadius: ICON_CIRCLE / 2,
     backgroundColor: ACCENT_SOFT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -283,8 +320,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   codeCharBox: {
-    width: 44,
-    height: 56,
+    width: CODE_BOX_SIZE,
+    height: CODE_BOX_SIZE * 1.27,
     borderRadius: 12,
     backgroundColor: ACCENT_SOFT,
     borderWidth: 1.5,
@@ -390,5 +427,44 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Vitals ready banner
+  vitalsReadyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: GREEN_SOFT,
+    borderWidth: 1,
+    borderColor: GREEN_BORDER,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    marginHorizontal: 24,
+    marginBottom: 8,
+  },
+  vitalsReadyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: GREEN,
+  },
+
+  // Proceed button
+  btnProceed: {
+    width: '100%',
+    backgroundColor: GREEN,
+    borderRadius: 12,
+    paddingVertical: 18,
+    alignItems: 'center',
+    shadowColor: GREEN,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  btnProceedText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

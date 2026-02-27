@@ -11,10 +11,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Rect, Path, Circle } from 'react-native-svg';
 import { useTriageSession as useRealtimeSession } from '../hooks/useTriageSession';
+import { textChat } from '../services/restApi';
+import { buildTriageSystemPrompt, TRIAGE_COMPLETE_TOOL, SAVE_USER_PROFILE_TOOL } from '../utils/triagePrompt';
+import { saveUserProfile } from '../services/firestoreService';
 import { showErrorToast } from '../utils/toast';
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
@@ -87,11 +92,6 @@ const CloseIcon = () => (
     <Line x1="18" y1="6" x2="6" y2="18" /><Line x1="6" y1="6" x2="18" y2="18" />
   </Svg>
 );
-const DotsIcon = () => (
-  <Svg width={24} height={24} viewBox="0 0 24 24" fill={TEXT_DARK}>
-    <Circle cx="5" cy="12" r="2" /><Circle cx="12" cy="12" r="2" /><Circle cx="19" cy="12" r="2" />
-  </Svg>
-);
 const MicIcon = ({ size = 32, color = WHITE }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <Path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
@@ -104,12 +104,6 @@ const StopIcon = () => (
     <Rect x="3" y="3" width="18" height="18" rx="4" />
   </Svg>
 );
-const KeyboardIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
-    <Path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
-  </Svg>
-);
 const AlertIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <Circle cx="12" cy="12" r="10" />
@@ -117,28 +111,19 @@ const AlertIcon = () => (
     <Line x1="12" y1="16" x2="12.01" y2="16" />
   </Svg>
 );
-
-// ─── Transcript line ──────────────────────────────────────────────────────────
-function TranscriptLine({ role, text }) {
-  const isAi = role === 'ai';
-  return (
-    <View style={[styles.txLine, isAi ? styles.txLineAi : styles.txLineUser]}>
-      <Text style={styles.txRole}>{isAi ? 'Visante AI' : 'You'}</Text>
-      <Text style={styles.txText}>{text}</Text>
-    </View>
-  );
-}
+const SendIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <Line x1="22" y1="2" x2="11" y2="13" />
+    <Path d="M22 2L15 22 11 13 2 9l20-7z" />
+  </Svg>
+);
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function HomeScreen({ onSubmit, onClose, userProfile = null, phoneNumber = null, onProfileCollected = null }) {
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState('voice');
   const [symptomText, setSymptomText] = useState('');
-  const [language, setLanguage] = useState('en'); // 'en' | 'tw'
-
-  const toggleLanguage = useCallback(() => {
-    setLanguage((prev) => (prev === 'en' ? 'tw' : 'en'));
-  }, []);
+  const [isSubmittingText, setIsSubmittingText] = useState(false);
+  const [language, setLanguage] = useState('en');
 
   const {
     sessionState, error, transcriptLines, permissionDenied,
@@ -151,8 +136,6 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
     phoneNumber,
   });
 
-  // Session starts when the user taps the mic — no auto-start on mount.
-
   const isConnecting = sessionState === 'connecting';
   const isListening = sessionState === 'listening';
   const isAiSpeaking = sessionState === 'ai_speaking';
@@ -161,7 +144,6 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
   const isActive = isConnecting || isListening || isAiSpeaking || isProcessing || isUserRecording;
   const hasError = sessionState === 'error';
 
-  // Badge label and waveform color reflect current state
   const badgeLabel = isConnecting ? 'CONNECTING…'
     : isUserRecording ? 'LISTENING…'
       : isProcessing ? 'THINKING…'
@@ -174,14 +156,13 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
   const waveActive = isUserRecording || isAiSpeaking;
 
   const handleMicPress = useCallback(async () => {
+    Keyboard.dismiss();
     try {
       if (isListening || isUserRecording) {
-        // REST mode: tap to start/stop recording
         if (toggleRecording) {
           await toggleRecording();
           return;
         }
-        // Realtime mode: end session
         endSession();
       } else if (isActive) {
         endSession();
@@ -194,26 +175,105 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
     }
   }, [isActive, isListening, isUserRecording, toggleRecording, startSession, endSession]);
 
-  const switchToType = useCallback(() => { if (isActive) endSession(); setMode('type'); }, [isActive, endSession]);
-  const switchToVoice = useCallback(() => setMode('voice'), []);
+  // ── Text submit — send through AI for proper triage analysis ──
+  const handleTextSubmit = useCallback(async () => {
+    const text = symptomText.trim();
+    if (!text || isSubmittingText) return;
 
-  const handleTextSubmit = useCallback(() => {
-    const textSummary = {
-      chief_complaint: symptomText.trim(),
-      symptom_duration: 'unknown',
-      severity: null,
-      associated_symptoms: [],
-      vitals: { blood_pressure: null, heart_rate: null, temperature_c: null, spo2_percent: null },
-      medical_history: '',
-      ai_recommendation: 'Patient submitted symptoms via text. Manual clinical assessment required.',
-      urgency_level: 'moderate',
-    };
-    onSubmit?.(textSummary);
-  }, [symptomText, onSubmit]);
+    Keyboard.dismiss();
+    setIsSubmittingText(true);
+
+    try {
+      const systemPrompt = buildTriageSystemPrompt(userProfile);
+      const tools = userProfile
+        ? [TRIAGE_COMPLETE_TOOL]
+        : [TRIAGE_COMPLETE_TOOL, SAVE_USER_PROFILE_TOOL];
+
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text },
+      ];
+
+      console.log('[HomeScreen] handleTextSubmit: sending text to AI...');
+      let result = await textChat(messages, tools);
+
+      // Handle save_user_profile tool call
+      if (result.toolCall?.name === 'save_user_profile') {
+        let profileArgs;
+        try { profileArgs = JSON.parse(result.toolCall.arguments); } catch (_) { }
+        if (profileArgs && phoneNumber) {
+          try { await saveUserProfile({ phoneNumber, ...profileArgs }); } catch (e) { console.warn('Failed to save profile:', e); }
+        }
+        if (profileArgs) {
+          onProfileCollected?.({ name: profileArgs.name, age: profileArgs.age, gender: profileArgs.gender });
+        }
+        // Continue conversation to get triage
+        if (result.transcript) messages.push({ role: 'assistant', content: result.transcript });
+        messages.push({ role: 'user', content: '[profile saved — continue with symptom assessment and complete triage]' });
+        result = await textChat(messages, [TRIAGE_COMPLETE_TOOL]);
+      }
+
+      // Handle complete_triage tool call
+      if (result.toolCall?.name === 'complete_triage') {
+        let args;
+        try { args = JSON.parse(result.toolCall.arguments); } catch (_) {
+          throw new Error('Could not parse triage summary from AI.');
+        }
+        console.log('[HomeScreen] handleTextSubmit: triage complete');
+        onSubmit?.(args);
+        return;
+      }
+
+      // If AI didn't trigger triage on first pass, ask it to complete
+      if (result.transcript) messages.push({ role: 'assistant', content: result.transcript });
+      messages.push({
+        role: 'user',
+        content: '[Based on what the patient described, please complete the triage assessment now using the complete_triage tool. Make reasonable inferences for any missing information.]',
+      });
+      const followUp = await textChat(messages, [TRIAGE_COMPLETE_TOOL]);
+
+      if (followUp.toolCall?.name === 'complete_triage') {
+        let args;
+        try { args = JSON.parse(followUp.toolCall.arguments); } catch (_) {
+          throw new Error('Could not parse triage summary from AI.');
+        }
+        console.log('[HomeScreen] handleTextSubmit: triage complete (follow-up)');
+        onSubmit?.(args);
+        return;
+      }
+
+      // Fallback — construct a basic summary from text
+      console.warn('[HomeScreen] handleTextSubmit: AI did not trigger triage — using fallback');
+      onSubmit?.({
+        chief_complaint: text,
+        symptom_duration: 'unknown',
+        severity: null,
+        associated_symptoms: [],
+        medical_history: '',
+        ai_recommendation: followUp.transcript || 'Based on your symptoms, we recommend visiting a pharmacy or booking a nurse for a vitals check.',
+        urgency_level: 'moderate',
+      });
+    } catch (e) {
+      console.error('[HomeScreen] handleTextSubmit error:', e);
+      showErrorToast(e, 'Could Not Analyze Symptoms');
+      // Fallback so the user isn't stuck
+      onSubmit?.({
+        chief_complaint: text,
+        symptom_duration: 'unknown',
+        severity: null,
+        associated_symptoms: [],
+        medical_history: '',
+        ai_recommendation: 'Patient submitted symptoms via text. Clinical assessment recommended.',
+        urgency_level: 'moderate',
+      });
+    } finally {
+      setIsSubmittingText(false);
+    }
+  }, [symptomText, isSubmittingText, userProfile, phoneNumber, onSubmit, onProfileCollected]);
 
   return (
     <KeyboardAvoidingView
-      style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      style={[styles.root, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
@@ -254,127 +314,122 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
         </View>
       )}
 
-      {/* ── Voice mode ── */}
-      {mode === 'voice' && (
-        <View style={styles.body}>
+      {/* ── Body ── */}
+      <View style={styles.body}>
 
-          {/* Title */}
-          <View style={styles.titleBlock}>
-            <Text style={styles.h1}>How can I help{'\n'}you today?</Text>
-            <Text style={styles.subtitle}>
-              {isActive
-                ? 'Speak naturally — the mic auto-detects when you stop.'
-                : 'Tap the microphone to start your consultation.'}
-            </Text>
-          </View>
-
-          {/* Waveform area — fills the center */}
-          <View style={styles.waveBlock}>
-            <View style={styles.soundwaveContainer}>
-              {BASE_HEIGHTS.map((h, i) => (
-                <WaveBar
-                  key={i}
-                  baseHeight={h}
-                  baseOpacity={BASE_OPACITIES[i]}
-                  isActive={waveActive}
-                  color={waveColor}
-                />
-              ))}
-            </View>
-            <View style={styles.listeningBadge}>
-              <View style={styles.dots}>
-                <PulseDot color="#f6985d" delay={0} />
-                <PulseDot color="#ce5a55" delay={150} />
-                <PulseDot color="#ba464a" delay={300} />
-              </View>
-              <Text style={styles.listeningText}>{badgeLabel}</Text>
-            </View>
-          </View>
-
+        {/* Title */}
+        <View style={styles.titleBlock}>
+          <Text style={styles.h1}>How can I help{'\n'}you today?</Text>
+          <Text style={styles.subtitle}>
+            {isActive
+              ? 'Speak naturally — the mic auto-detects when you stop.'
+              : 'Tap the mic or type your symptoms below.'}
+          </Text>
         </View>
-      )}
 
-      {/* ── Text mode ── */}
-      {mode === 'type' && (
-        <View style={styles.body}>
-          <View style={styles.titleBlock}>
-            <Text style={styles.h1}>Describe your{'\n'}symptoms</Text>
-            <Text style={styles.subtitle}>Type as much detail as you'd like.</Text>
-          </View>
-
-          <View style={styles.inputBlock}>
-            <View style={styles.textInputWrapper}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g. I have a headache and a sore throat..."
-                placeholderTextColor={TEXT_MUTED}
-                multiline
-                value={symptomText}
-                onChangeText={setSymptomText}
-                autoFocus
+        {/* Waveform area */}
+        <View style={styles.waveBlock}>
+          <View style={styles.soundwaveContainer}>
+            {BASE_HEIGHTS.map((h, i) => (
+              <WaveBar
+                key={i}
+                baseHeight={h}
+                baseOpacity={BASE_OPACITIES[i]}
+                isActive={waveActive}
+                color={waveColor}
               />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, !symptomText.trim() && styles.submitBtnDisabled]}
-              disabled={!symptomText.trim()}
-              onPress={handleTextSubmit}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.submitBtnText}>Submit</Text>
-            </TouchableOpacity>
+            ))}
           </View>
-
-          <View style={styles.bottomBlock}>
-            <TouchableOpacity style={styles.typeBtn} onPress={switchToVoice} activeOpacity={0.85}>
-              <MicIcon size={20} color="#555" />
-              <Text style={styles.typeBtnText}>Use voice instead</Text>
-            </TouchableOpacity>
+          <View style={styles.listeningBadge}>
+            <View style={styles.dots}>
+              <PulseDot color="#f6985d" delay={0} />
+              <PulseDot color="#ce5a55" delay={150} />
+              <PulseDot color="#ba464a" delay={300} />
+            </View>
+            <Text style={styles.listeningText}>{badgeLabel}</Text>
           </View>
         </View>
-      )}
 
-      {/* Mic + type button — directly above footer */}
-      {mode === 'voice' && (
-        <View style={styles.bottomControls}>
-          {/* Mic button */}
-          <View style={styles.micBlock}>
-            <View style={styles.micRing}>
-              <TouchableOpacity
-                style={[
-                  styles.micBtn,
-                  (isUserRecording || isProcessing || isAiSpeaking) && styles.micBtnActive,
-                  isConnecting && styles.micBtnConnecting,
-                ]}
-                onPress={handleMicPress}
-                activeOpacity={0.85}
-                disabled={isConnecting || isProcessing || isAiSpeaking}
-              >
-                {isUserRecording ? <StopIcon /> : <MicIcon />}
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.tapText}>
-              {isConnecting ? 'Connecting…'
-                : isUserRecording ? 'Listening… tap to send early'
-                  : isProcessing ? 'Thinking…'
-                    : isAiSpeaking ? 'AI is speaking…'
-                      : isListening ? 'Tap to speak'
-                        : hasError ? 'Tap to retry'
-                          : 'Tap to start'}
-            </Text>
+      </View>
+
+      {/* ── Bottom: Text input + Submit + Mic ── */}
+      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + 12 }]}>
+
+        {/* Text input row */}
+        <View style={styles.textInputRow}>
+          <View style={styles.textInputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Type your symptoms here..."
+              placeholderTextColor={TEXT_GRAY}
+              value={symptomText}
+              onChangeText={setSymptomText}
+              multiline
+              maxLength={500}
+              editable={!isSubmittingText}
+            />
           </View>
-
-          {/* Switch to text input */}
-          <TouchableOpacity style={styles.typeBtn} onPress={switchToType} activeOpacity={0.85}>
-            <KeyboardIcon />
-            <Text style={styles.typeBtnText}>Type your symptoms</Text>
+          <TouchableOpacity
+            style={[
+              styles.sendBtn,
+              (!symptomText.trim() || isSubmittingText) && styles.sendBtnDisabled,
+            ]}
+            disabled={!symptomText.trim() || isSubmittingText}
+            onPress={handleTextSubmit}
+            activeOpacity={0.85}
+          >
+            {isSubmittingText ? (
+              <Text style={styles.sendBtnDots}>...</Text>
+            ) : (
+              <SendIcon />
+            )}
           </TouchableOpacity>
         </View>
-      )}
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Mic button */}
+        <View style={styles.micBlock}>
+          <View style={styles.micRing}>
+            <TouchableOpacity
+              style={[
+                styles.micBtn,
+                (isUserRecording || isProcessing || isAiSpeaking) && styles.micBtnActive,
+                isConnecting && styles.micBtnConnecting,
+              ]}
+              onPress={handleMicPress}
+              activeOpacity={0.85}
+              disabled={isConnecting || isProcessing || isAiSpeaking || isSubmittingText}
+            >
+              {isUserRecording ? <StopIcon /> : <MicIcon />}
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.tapText}>
+            {isConnecting ? 'Connecting…'
+              : isUserRecording ? 'Listening… tap to send'
+                : isProcessing ? 'Thinking…'
+                  : isAiSpeaking ? 'AI is speaking…'
+                    : isListening ? 'Tap to speak'
+                      : hasError ? 'Tap to retry'
+                        : 'Tap to start'}
+          </Text>
+        </View>
+      </View>
 
     </KeyboardAvoidingView>
   );
 }
+
+// ─── Responsive helpers ─────────────────────────────────────────────────────
+const { width: SCREEN_W } = Dimensions.get('window');
+const MIC_SIZE = Math.min(SCREEN_W * 0.17, 64);
+const MIC_RING_SIZE = Math.min(SCREEN_W * 0.21, 80);
+const SEND_SIZE = Math.min(SCREEN_W * 0.12, 44);
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -385,7 +440,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: '8%',
+    height: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -427,68 +482,27 @@ const styles = StyleSheet.create({
 
   body: {
     flex: 1,
-    flexDirection: 'column',
   },
 
   titleBlock: {
     alignItems: 'center',
-    paddingTop: '3%',
-    paddingBottom: '2%',
+    paddingTop: '2%',
+    paddingBottom: '1%',
   },
   h1: {
     textAlign: 'center',
-    fontSize: 32,
+    fontSize: 30,
     color: TEXT_DARK,
     fontWeight: '700',
-    lineHeight: 40,
-    marginBottom: 10,
+    lineHeight: 38,
+    marginBottom: 8,
   },
   subtitle: {
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 15,
     color: TEXT_MUTED,
-    lineHeight: 24,
+    lineHeight: 22,
     paddingHorizontal: 10,
-  },
-
-  // Live transcript
-  transcriptScroll: {
-    flex: 1,
-    marginBottom: 8,
-  },
-  transcriptContent: {
-    paddingTop: 8,
-    gap: 10,
-  },
-  txLine: {
-    borderRadius: 12,
-    padding: 12,
-    maxWidth: '90%',
-  },
-  txLineUser: {
-    alignSelf: 'flex-end',
-    backgroundColor: USER_ORANGE + '18',
-    borderWidth: 1,
-    borderColor: USER_ORANGE + '30',
-  },
-  txLineAi: {
-    alignSelf: 'flex-start',
-    backgroundColor: AI_BLUE + '12',
-    borderWidth: 1,
-    borderColor: AI_BLUE + '25',
-  },
-  txRole: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: TEXT_GRAY,
-    letterSpacing: 0.5,
-    marginBottom: 3,
-    textTransform: 'uppercase',
-  },
-  txText: {
-    fontSize: 14,
-    color: TEXT_DARK,
-    lineHeight: 20,
   },
 
   // Waveform
@@ -496,14 +510,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 20,
+    gap: 16,
   },
   soundwaveContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    height: 120,
+    height: 100,
     width: '100%',
   },
   listeningBadge: {
@@ -514,8 +528,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f0f0f0',
     borderRadius: 30,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.02,
@@ -528,81 +542,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listeningText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#7a7a7a',
     letterSpacing: 1,
   },
 
-  // Bottom controls container (mic + type button)
-  bottomControls: {
-    alignItems: 'center',
-    gap: 20,
-    paddingBottom: 16,
-  },
-
-  // Mic button
-  micBlock: {
-    alignItems: 'center',
-  },
-  micRing: {
-    width: 112,
-    height: 112,
-    backgroundColor: MIC_RING,
-    borderRadius: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  micBtn: {
-    width: 92,
-    height: 92,
-    backgroundColor: ACCENT_BTM,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: ACCENT_BTM,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  micBtnActive: { backgroundColor: '#8b2e32' },
-  micBtnConnecting: { backgroundColor: '#94a3b8', opacity: 0.7 },
-  tapText: { color: TEXT_MUTED, fontSize: 15, fontWeight: '500' },
-
-  typeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  // ── Bottom section (text input + mic) ──
+  bottomSection: {
     gap: 12,
-    width: '100%',
-    paddingVertical: 14,
-    backgroundColor: WHITE,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 15,
-    elevation: 1,
   },
-  typeBtnText: { fontSize: 16, fontWeight: '600', color: TEXT_DARK },
 
-  // Text input mode
-  inputBlock: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 16,
+  // Text input row
+  textInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
   },
   textInputWrapper: {
+    flex: 1,
     backgroundColor: WHITE,
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 20,
-    padding: 20,
-    minHeight: 180,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    maxHeight: 80,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
@@ -610,25 +575,75 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   textInput: {
-    fontSize: 16,
+    fontSize: 15,
     color: TEXT_DARK,
-    lineHeight: 24,
+    lineHeight: 20,
     textAlignVertical: 'top',
-    minHeight: 140,
+    maxHeight: 60,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
-  submitBtn: {
-    width: '100%',
-    paddingVertical: 18,
+  sendBtn: {
+    width: SEND_SIZE,
+    height: SEND_SIZE,
+    borderRadius: SEND_SIZE / 2,
     backgroundColor: ACCENT_BTM,
-    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: ACCENT_BTM,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  sendBtnDisabled: { opacity: 0.35 },
+  sendBtnDots: { color: WHITE, fontSize: 18, fontWeight: '700' },
+
+  // Divider
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: BORDER,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: TEXT_GRAY,
+  },
+
+  // Mic button
+  micBlock: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  micRing: {
+    width: MIC_RING_SIZE,
+    height: MIC_RING_SIZE,
+    backgroundColor: MIC_RING,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micBtn: {
+    width: MIC_SIZE,
+    height: MIC_SIZE,
+    backgroundColor: ACCENT_BTM,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: ACCENT_BTM,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  submitBtnDisabled: { opacity: 0.4 },
-  submitBtnText: { color: WHITE, fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
-
+  micBtnActive: { backgroundColor: '#8b2e32' },
+  micBtnConnecting: { backgroundColor: '#94a3b8', opacity: 0.7 },
+  tapText: { color: TEXT_MUTED, fontSize: 13, fontWeight: '500' },
 });

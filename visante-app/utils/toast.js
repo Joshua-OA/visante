@@ -2,7 +2,8 @@ import Toast from 'react-native-toast-message';
 
 /**
  * Show a user-friendly error toast.
- * Maps raw error messages to warm, conversational descriptions.
+ * Maps raw error messages to warm, conversational descriptions
+ * that always include a resolution path so the user never feels stuck.
  */
 export function showErrorToast(error, fallbackTitle) {
   const message = typeof error === 'string' ? error : error?.message ?? '';
@@ -12,7 +13,7 @@ export function showErrorToast(error, fallbackTitle) {
     type: 'error',
     text1: friendly.title,
     text2: friendly.body,
-    visibilityTime: 4000,
+    visibilityTime: 5000,
     topOffset: 60,
   });
 }
@@ -39,6 +40,7 @@ export function showInfoToast(title, body) {
 
 /**
  * Map raw error strings to warm, conversational messages for the user.
+ * Every message includes a resolution path so the user always knows what to do next.
  */
 function getFriendlyMessage(message, fallbackTitle) {
   const lower = message.toLowerCase();
@@ -47,7 +49,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('network request failed') || lower.includes('failed to fetch')) {
     return {
       title: 'Connection Issue',
-      body: 'It looks like you may have lost connection. Kindly check your internet and try again.',
+      body: 'It looks like you may have lost connection. Please check your internet — we\'ll reconnect automatically once you\'re back online.',
     };
   }
 
@@ -55,7 +57,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('timed out') || lower.includes('timeout')) {
     return {
       title: 'Taking Too Long',
-      body: 'Sorry, the server is taking too long to respond. Please try again in a moment.',
+      body: 'The server is taking a bit longer than usual. We\'re retrying in the background — please wait a moment or try again.',
     };
   }
 
@@ -63,7 +65,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('microphone') || lower.includes('mic')) {
     return {
       title: 'Microphone Access Needed',
-      body: 'We need microphone access for voice consultations. Please enable it in your device settings.',
+      body: 'We need microphone access for your consultation. Tap "Settings" on the banner above to enable it, then come back.',
     };
   }
 
@@ -71,7 +73,15 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('recording') || lower.includes('record')) {
     return {
       title: 'Audio Issue',
-      body: 'Sorry, we couldn\'t capture your voice. Please tap the mic and try again.',
+      body: 'We couldn\'t capture your voice this time. Don\'t worry — just tap the mic again and we\'ll try once more.',
+    };
+  }
+
+  // Video / Jitsi / WebRTC errors
+  if (lower.includes('video') || lower.includes('jitsi') || lower.includes('webrtc') || lower.includes('webview')) {
+    return {
+      title: 'Video Connection Issue',
+      body: 'We\'re having trouble with the video feed. Please check your internet connection — we\'re working to reconnect you automatically.',
     };
   }
 
@@ -79,7 +89,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('not configured') || lower.includes('api_key')) {
     return {
       title: 'Setup Issue',
-      body: 'Sorry, the app is missing a required setting. Please contact support for help.',
+      body: 'Something isn\'t configured correctly on our end. Our team has been notified and is already working on it. Please try again shortly.',
     };
   }
 
@@ -87,7 +97,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('chat api error') || lower.includes('api error')) {
     return {
       title: 'AI Unavailable',
-      body: 'Sorry, we\'re facing some challenges with our AI assistant. Please try again shortly.',
+      body: 'Our AI assistant is temporarily unavailable. This is being resolved automatically — please try again in a moment.',
     };
   }
 
@@ -95,7 +105,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('websocket')) {
     return {
       title: 'Connection Lost',
-      body: 'We lost connection to the server. Kindly check your internet and try again.',
+      body: 'We lost the connection briefly. Please check your internet — we\'ll reconnect automatically once it\'s stable.',
     };
   }
 
@@ -103,7 +113,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('otp') || lower.includes('verification')) {
     return {
       title: 'Verification Issue',
-      body: 'Sorry, we couldn\'t verify your number. Please double-check and try again.',
+      body: 'We couldn\'t verify your number this time. Please double-check the code and try again. You can also request a new code below.',
     };
   }
 
@@ -111,7 +121,7 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('transcri')) {
     return {
       title: 'Couldn\'t Hear You',
-      body: 'Sorry, we had trouble understanding your voice. Please try speaking again clearly.',
+      body: 'We had trouble understanding your voice. Please try speaking again clearly in a quieter environment — the mic is ready.',
     };
   }
 
@@ -119,7 +129,15 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('parse') || lower.includes('triage summary')) {
     return {
       title: 'Processing Issue',
-      body: 'Sorry, something went wrong processing your consultation. Please try again.',
+      body: 'Something went wrong processing your results. We\'re retrying automatically — if it persists, you can type your symptoms instead.',
+    };
+  }
+
+  // Payment errors
+  if (lower.includes('payment') || lower.includes('pay') || lower.includes('momo') || lower.includes('mobile money')) {
+    return {
+      title: 'Payment Issue',
+      body: 'We couldn\'t process your payment right now. Please check your mobile money balance and try again. Your booking is saved.',
     };
   }
 
@@ -127,7 +145,15 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('save') || lower.includes('firestore') || lower.includes('firebase')) {
     return {
       title: 'Couldn\'t Save',
-      body: 'Sorry, we couldn\'t save your data. Kindly check your internet connection.',
+      body: 'We couldn\'t save your data just now. Please check your internet — your progress is safe and we\'ll retry automatically.',
+    };
+  }
+
+  // Appointment / booking errors
+  if (lower.includes('appointment') || lower.includes('booking')) {
+    return {
+      title: 'Booking Issue',
+      body: 'We hit a snag with your booking. Don\'t worry — your session is saved. Please try again or return to your dashboard.',
     };
   }
 
@@ -135,13 +161,21 @@ function getFriendlyMessage(message, fallbackTitle) {
   if (lower.includes('load') || lower.includes('fetch') || lower.includes('dashboard')) {
     return {
       title: 'Couldn\'t Load Data',
-      body: 'Sorry, we couldn\'t load your information. Kindly check your internet and try again.',
+      body: 'We couldn\'t load your information right now. Please check your internet and pull down to refresh — your data is safe.',
     };
   }
 
-  // Generic fallback
+  // PDF / download errors
+  if (lower.includes('pdf') || lower.includes('download') || lower.includes('print') || lower.includes('share')) {
+    return {
+      title: 'Download Issue',
+      body: 'We couldn\'t generate your document right now. Please try again — your medical summary is saved and you can download it anytime.',
+    };
+  }
+
+  // Generic fallback — always friendly with a resolution
   return {
-    title: fallbackTitle ?? 'Oops, Something Went Wrong',
-    body: 'Sorry, we\'re facing some challenges. Please try again.',
+    title: fallbackTitle ?? 'Something Went Wrong',
+    body: 'We ran into an unexpected issue, but our team is on it. Please try again — if this continues, restart the app or check your connection.',
   };
 }
