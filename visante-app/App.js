@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { showErrorToast } from './utils/toast';
 
 import HomeScreen from './screens/HomeScreen';
 import ResultsScreen from './screens/ResultsScreen';
@@ -20,17 +23,21 @@ import {
   setSessionServiceType,
   createAppointment,
   fetchUserProfile,
+  saveUserProfile,
 } from './services/firestoreService';
+
+const PHONE_STORAGE_KEY = '@visante_phone';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  // New users start at AI triage; returning users (with phone) go to dashboard.
-  // Without persistent storage we default to 'home' (AI triage).
-  const [screen, setScreen] = useState('home');
+  const [screen, setScreen] = useState('loading'); // start with loading while we check storage
   const [phoneNumber, setPhoneNumber] = useState('');
   const [triageSummary, setTriageSummary] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+
+  // Pending profile collected during triage (before phone is verified)
+  const pendingProfileRef = useRef(null);
 
   // ── Firestore state ──
   const [sessionId, setSessionId] = useState(null);
@@ -39,14 +46,35 @@ export default function App() {
   const [selectedProvider, setSelectedProvider] = useState(null); // pharmacy or nurse doc
   const [serviceAmount, setServiceAmount] = useState(0);
 
+  // ── On launch: load persisted phone, fetch profile, route accordingly ──
   useEffect(() => {
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync();
-    }, 10000);
-    return () => clearTimeout(timer);
+    async function bootstrap() {
+      try {
+        const savedPhone = await AsyncStorage.getItem(PHONE_STORAGE_KEY);
+        if (savedPhone) {
+          setPhoneNumber(savedPhone);
+          const profile = await fetchUserProfile(savedPhone);
+          if (profile) {
+            setUserProfile(profile);
+            setScreen('dashboard');
+          } else {
+            // Phone saved but no profile — start fresh triage
+            setScreen('home');
+          }
+        } else {
+          setScreen('home');
+        }
+      } catch (e) {
+        console.warn('Bootstrap error:', e);
+        setScreen('home');
+      } finally {
+        SplashScreen.hideAsync();
+      }
+    }
+    bootstrap();
   }, []);
 
-  // Load user profile when phone number is available
+  // Load/refresh user profile when phone number changes (e.g. after verification)
   useEffect(() => {
     if (!phoneNumber) return;
     async function loadProfile() {
@@ -55,6 +83,7 @@ export default function App() {
         if (profile) setUserProfile(profile);
       } catch (e) {
         console.warn('Could not load user profile:', e);
+        showErrorToast(e, 'Could Not Load Profile');
       }
     }
     loadProfile();
@@ -72,6 +101,7 @@ export default function App() {
       setSessionId(id);
     } catch (e) {
       console.warn('Could not save triage session:', e);
+      showErrorToast(e, 'Could Not Save Session');
     }
   }
 
@@ -85,6 +115,7 @@ export default function App() {
       if (sessionId) await setSessionServiceType(sessionId, 'pharmacy');
     } catch (e) {
       console.warn('Could not update session service type:', e);
+      showErrorToast(e, 'Could Not Update Session');
     }
   }
 
@@ -98,6 +129,7 @@ export default function App() {
       if (sessionId) await setSessionServiceType(sessionId, 'nurse');
     } catch (e) {
       console.warn('Could not update session service type:', e);
+      showErrorToast(e, 'Could Not Update Session');
     }
   }
 
@@ -118,6 +150,7 @@ export default function App() {
       setAppointmentId(id);
     } catch (e) {
       console.warn('Could not create appointment:', e);
+      showErrorToast(e, 'Could Not Create Appointment');
     }
   }
 
@@ -148,6 +181,9 @@ export default function App() {
     }
   }
 
+  // While loading, show nothing (splash screen is still visible)
+  if (screen === 'loading') return null;
+
   return (
     <SafeAreaProvider>
       {/* ── Returning-user dashboard ── */}
@@ -167,6 +203,14 @@ export default function App() {
           onClose={(userProfile || triageSummary) ? () => setScreen('dashboard') : null}
           userProfile={userProfile}
           phoneNumber={phoneNumber}
+          onProfileCollected={(profile) => {
+            // If phone is already known, profile is saved in the hook.
+            // Otherwise stash it so we can save after phone verification.
+            if (!phoneNumber) {
+              pendingProfileRef.current = profile;
+            }
+            setUserProfile(profile);
+          }}
         />
       )}
 
@@ -208,8 +252,27 @@ export default function App() {
               ? setScreen('booking')
               : setScreen('serviceSelection')
           }
-          onVerified={(num) => {
+          onVerified={async (num) => {
             setPhoneNumber(num);
+            // Persist phone so returning users land on dashboard
+            try {
+              await AsyncStorage.setItem(PHONE_STORAGE_KEY, num);
+            } catch (e) {
+              console.warn('Could not persist phone number:', e);
+            }
+            // If AI collected a profile during triage but couldn't save
+            // (no phone yet), save it now
+            if (pendingProfileRef.current) {
+              try {
+                await saveUserProfile({ phoneNumber: num, ...pendingProfileRef.current });
+                console.log('[App] Saved pending user profile for', num);
+                const profile = await fetchUserProfile(num);
+                if (profile) setUserProfile(profile);
+              } catch (e) {
+                console.warn('Could not save pending profile:', e);
+              }
+              pendingProfileRef.current = null;
+            }
             setScreen('payment');
           }}
           detectedPhone=""
@@ -273,6 +336,7 @@ export default function App() {
       )}
 
       <StatusBar style="dark" />
+      <Toast />
     </SafeAreaProvider>
   );
 }

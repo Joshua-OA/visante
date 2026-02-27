@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Rect, Path, Circle } from 'react-native-svg';
 import { useTriageSession as useRealtimeSession } from '../hooks/useTriageSession';
+import { showErrorToast } from '../utils/toast';
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
 const BG = '#faf9f6';
@@ -129,7 +130,7 @@ function TranscriptLine({ role, text }) {
 }
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
-export default function HomeScreen({ onSubmit, onClose, userProfile = null, phoneNumber = null }) {
+export default function HomeScreen({ onSubmit, onClose, userProfile = null, phoneNumber = null, onProfileCollected = null }) {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('voice');
   const [symptomText, setSymptomText] = useState('');
@@ -144,6 +145,7 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
     startSession, endSession, toggleRecording, isRecording,
   } = useRealtimeSession({
     onTriageComplete: (summary) => onSubmit?.(summary),
+    onProfileCollected,
     language,
     userProfile,
     phoneNumber,
@@ -172,18 +174,23 @@ export default function HomeScreen({ onSubmit, onClose, userProfile = null, phon
   const waveActive = isUserRecording || isAiSpeaking;
 
   const handleMicPress = useCallback(async () => {
-    if (isListening || isUserRecording) {
-      // REST mode: tap to start/stop recording
-      if (toggleRecording) {
-        await toggleRecording();
-        return;
+    try {
+      if (isListening || isUserRecording) {
+        // REST mode: tap to start/stop recording
+        if (toggleRecording) {
+          await toggleRecording();
+          return;
+        }
+        // Realtime mode: end session
+        endSession();
+      } else if (isActive) {
+        endSession();
+      } else {
+        await startSession();
       }
-      // Realtime mode: end session
-      endSession();
-    } else if (isActive) {
-      endSession();
-    } else {
-      await startSession();
+    } catch (e) {
+      console.error('[HomeScreen] handleMicPress error:', e);
+      showErrorToast(e);
     }
   }, [isActive, isListening, isUserRecording, toggleRecording, startSession, endSession]);
 

@@ -13,6 +13,7 @@ import Svg, {
     Line, Polyline, Path, Circle, Rect,
 } from 'react-native-svg';
 import { fetchPharmacies, fetchNurses } from '../services/firestoreService';
+import { showErrorToast } from '../utils/toast';
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
 const BG = '#FEF8F5';
@@ -218,7 +219,8 @@ export default function ServiceSelectionScreen({ onBack, onSelectPharmacy, onSel
                 }
             } catch (e) {
                 console.warn('ServiceSelection fetch error:', e);
-                setError('Could not load data. Please check your connection.');
+                setError('Could not load providers. Please check your connection.');
+                showErrorToast(e, 'Could Not Load Providers');
             } finally {
                 setLoading(false);
             }
@@ -297,7 +299,7 @@ export default function ServiceSelectionScreen({ onBack, onSelectPharmacy, onSel
             ) : (
                 <View style={[styles.infoBand, { backgroundColor: ORANGE_SOFT, borderColor: '#ffedd5' }]}>
                     <Text style={[styles.infoBandText, { color: '#c2410c' }]}>
-                        GHS 60+ — Personal home visit by a nurse
+                        GHS 80 — Personal home visit by a nurse
                     </Text>
                 </View>
             )}

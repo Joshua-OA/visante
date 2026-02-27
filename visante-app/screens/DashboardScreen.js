@@ -14,6 +14,7 @@ import Svg, {
   Line, Polyline, Path, Circle, Rect, Polygon,
 } from 'react-native-svg';
 import { fetchLatestAppointment, subscribeToActiveBookings } from '../services/firestoreService';
+import { showErrorToast } from '../utils/toast';
 
 // ─── Design tokens (mirrors app-wide system) ─────────────────────────────────
 const PRIMARY_RED = '#bb5454';
@@ -159,6 +160,7 @@ export default function DashboardScreen({ onStartTriage, onViewActiveBooking, us
         setLatestAppt(latest);
       } catch (e) {
         console.warn('Dashboard Firestore load error:', e);
+        showErrorToast(e, 'Could Not Load Dashboard');
       } finally {
         setLoadingData(false);
       }

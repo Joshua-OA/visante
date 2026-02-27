@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Polyline, Path, Circle, Rect } from 'react-native-svg';
 import { sendOtp, verifyOtp } from '../services/restApi';
+import { showErrorToast } from '../utils/toast';
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 const PRIMARY_RED  = '#bb5454';
@@ -116,8 +117,9 @@ export default function PhoneVerifyScreen({ onBack, onVerified, detectedPhone })
       setTimeout(() => otpRefs[0].current?.focus(), 300);
     } catch (e) {
       console.error('[PhoneVerify] sendOtp error:', e.message);
-      setError(e.message || 'Failed to send OTP. Please try again.');
+      setError('Could not send code. Please try again.');
       setPhase('phone');
+      showErrorToast(e, 'Verification Failed');
     }
   }
 
@@ -131,7 +133,8 @@ export default function PhoneVerifyScreen({ onBack, onVerified, detectedPhone })
       setOtpDigits(['', '', '', '']);
       otpRefs[0].current?.focus();
     } catch (e) {
-      setError(e.message || 'Failed to resend OTP.');
+      setError('Could not resend code. Please try again.');
+      showErrorToast(e, 'Verification Failed');
     }
   }
 
@@ -181,10 +184,11 @@ export default function PhoneVerifyScreen({ onBack, onVerified, detectedPhone })
       }, 1200);
     } catch (e) {
       console.error('[PhoneVerify] verifyOtp error:', e.message);
-      setError(e.message || 'Invalid OTP. Please try again.');
+      setError('Invalid code. Please check and try again.');
       setPhase('otp');
       setOtpDigits(['', '', '', '']);
       otpRefs[0].current?.focus();
+      showErrorToast(e, 'Verification Failed');
     }
   }
 

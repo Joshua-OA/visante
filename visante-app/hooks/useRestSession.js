@@ -11,6 +11,7 @@ import {
   arrayBufferToBase64,
   pcmToWav,
 } from '../utils/pcmUtils';
+import { showErrorToast } from '../utils/toast';
 
 /**
  * Session states (same as useRealtimeSession):
@@ -75,7 +76,7 @@ const RECORDING_OPTIONS = {
  *   userProfile — if set, AI greets by name and skips profile collection.
  *   phoneNumber — used to save user profile to Firestore.
  */
-export function useRestSession({ onTriageComplete, language = 'en', userProfile = null, phoneNumber = null }) {
+export function useRestSession({ onTriageComplete, onProfileCollected = null, language = 'en', userProfile = null, phoneNumber = null }) {
   const [sessionState, setSessionState] = useState('idle');
   const [error, setError] = useState(null);
   const [transcriptLines, setTranscript] = useState([]);
@@ -246,6 +247,7 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
                 if (!abortRef.current) {
                   setError(e.message ?? 'Recording error');
                   setSessionState('error');
+                  showErrorToast(e, 'Recording Failed');
                 }
               }
             }
@@ -262,6 +264,7 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
       if (!abortRef.current) {
         setError('Failed to start recording.');
         setSessionState('error');
+        showErrorToast(e, 'Recording Failed');
       }
     }
   }, [stopSilenceDetection]);
@@ -359,6 +362,11 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
               } catch (e) { console.warn('[useRestSession] Failed to save user profile:', e); }
             }
 
+            // Notify parent so the profile can be stashed (saved after phone verification if needed)
+            if (profileArgs) {
+              onProfileCollected?.({ name: profileArgs.name, age: profileArgs.age, gender: profileArgs.gender });
+            }
+
             if (proxyResult.transcript) conversationRef.current.push({ role: 'assistant', content: proxyResult.transcript });
             if (proxyResult.audioBase64 && !abortRef.current) {
               setSessionState('ai_speaking');
@@ -396,10 +404,26 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
             } catch (_) { throw new Error('Could not parse triage summary from AI.'); }
 
             if (proxyResult.transcript) conversationRef.current.push({ role: 'assistant', content: proxyResult.transcript });
-            if (proxyResult.audioBase64) {
+            if (proxyResult.audioBase64 && !abortRef.current) {
               setSessionState('ai_speaking');
               await playAudio(proxyResult.audioBase64);
             }
+
+            // If the AI returned only a tool call with no audio, generate a
+            // farewell message so the user knows what's happening next.
+            if (!proxyResult.audioBase64 && !abortRef.current) {
+              console.log('[useRestSession] complete_triage: no audio — generating farewell via REST');
+              conversationRef.current.push({
+                role: 'user',
+                content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals at a pharmacy (free) or with a nurse (GHS 80)]',
+              });
+              const farewell = await audioChat(conversationRef.current, [], TTS_VOICE);
+              if (!abortRef.current && farewell.audioBase64) {
+                setSessionState('ai_speaking');
+                await playAudio(farewell.audioBase64);
+              }
+            }
+
             setSessionState('complete');
             await cleanup();
             onTriageComplete?.(args);
@@ -466,6 +490,11 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
             } catch (e) { console.warn('[useRestSession] Failed to save user profile:', e); }
           }
 
+          // Notify parent so the profile can be stashed (saved after phone verification if needed)
+          if (profileArgs) {
+            onProfileCollected?.({ name: profileArgs.name, age: profileArgs.age, gender: profileArgs.gender });
+          }
+
           if (transcript) conversationRef.current.push({ role: 'assistant', content: transcript });
           if (responseAudio && !abortRef.current) {
             setSessionState('ai_speaking');
@@ -501,10 +530,26 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
           }
 
           if (transcript) conversationRef.current.push({ role: 'assistant', content: transcript });
-          if (responseAudio) {
+          if (responseAudio && !abortRef.current) {
             setSessionState('ai_speaking');
             await playAudio(responseAudio);
           }
+
+          // If the AI returned only a tool call with no audio, generate a
+          // farewell message so the user knows what's happening next.
+          if (!responseAudio && !abortRef.current) {
+            console.log('[useRestSession] complete_triage: no audio — generating farewell via REST');
+            conversationRef.current.push({
+              role: 'user',
+              content: '[triage complete — please tell the patient you have enough information and that the next step is checking their vitals at a pharmacy (free) or with a nurse (GHS 80)]',
+            });
+            const farewell = await audioChat(conversationRef.current, [], TTS_VOICE);
+            if (!abortRef.current && farewell.audioBase64) {
+              setSessionState('ai_speaking');
+              await playAudio(farewell.audioBase64);
+            }
+          }
+
           setSessionState('complete');
           await cleanup();
           onTriageComplete?.(args);
@@ -528,9 +573,10 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
       if (!abortRef.current) {
         setError(e.message ?? 'An error occurred.');
         setSessionState('error');
+        showErrorToast(e);
       }
     }
-  }, [language, playAudio, cleanup, onTriageComplete, phoneNumber]);
+  }, [language, playAudio, cleanup, onTriageComplete, onProfileCollected, phoneNumber]);
 
   // ── Start Session ─────────────────────────────────────────────────────────
 
@@ -610,6 +656,7 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
       if (!abortRef.current) {
         setError(e.message ?? 'Failed to start session.');
         setSessionState('error');
+        showErrorToast(e);
       }
     }
   }, [playAudio, startAutoRecording]);
@@ -643,6 +690,7 @@ export function useRestSession({ onTriageComplete, language = 'en', userProfile 
         if (!abortRef.current) {
           setError(e.message ?? 'Recording error');
           setSessionState('error');
+          showErrorToast(e, 'Recording Failed');
         }
       }
     } else if (sessionStateRef.current === 'listening') {
