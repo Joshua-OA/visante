@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #c65d5d;
+            --text-dark: #1a1a1a;
+            --text-light: #6e7c87;
+            --bg-color: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: var(--bg-color);
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Top Progress Bar */
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #eee;
+        }
+        .progress-fill {
+            width: 33%;
+            height: 100%;
+            background: var(--primary-red);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            color: var(--text-light);
+        }
+        .step-text {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Content */
+        .content {
+            text-align: center;
+            margin-top: 40px;
+            flex-grow: 1;
+        }
+
+        .phone-icon-wrapper {
+            background: #fff5f5;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+        }
+
+        h1 {
+            font-size: 26px;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: var(--text-light);
+            line-height: 1.5;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Input Field */
+        .input-container {
+            border: 2px solid var(--primary-red);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            height: 65px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .country-code {
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            background: #fcfcfc;
+            border-right: 1px solid var(--border-color);
+            height: 100%;
+            font-weight: 500;
+        }
+
+        .flag {
+            width: 24px;
+            margin-right: 8px;
+        }
+
+        .number-input {
+            flex-grow: 1;
+            padding: 0 20px;
+            font-size: 18px;
+            color: #ccc;
+            letter-spacing: 1px;
+        }
+
+        .disclaimer {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-light);
+            text-align: left;
+            padding: 0 10px;
+        }
+
+        /* Keypad */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+            padding: 0 20px;
+        }
+
+        .key {
+            font-size: 24px;
+            font-weight: 500;
+            padding: 15px;
+            cursor: pointer;
+            color: var(--text-dark);
+        }
+
+        /* Footer */
+        .footer-action {
+            padding: 20px 0;
+        }
+
+        .btn-send {
+            width: 100%;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(198, 93, 93, 0.3);
+        }
+
+        .protocol {
+            font-size: 10px;
+            color: #b0bac1;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+
+    <div class="header">
+        <div class="back-icon">←</div>
+        <div class="step-text">Step 1 of 3</div>
+        <div class="help-icon">?</div>
+    </div>
+
+    <div class="content">
+        <div class="phone-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c65d5d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        </div>
+
+        <h1>Enter your mobile number</h1>
+        <p class="subtitle">We'll send a 4-digit verification code to this number to secure your account.</p>
+
+        <div class="input-container">
+            <div class="country-code">
+                <img src="https://flagcdn.com/w40/gh.png" class="flag" alt="Ghana">
+                +233 <span>▾</span>
+            </div>
+            <div class="number-input">00 000 0000</div>
+        </div>
+
+        <div class="disclaimer">
+            <span>ⓘ</span>
+            <p>Message and data rates may apply. You will receive an SMS verification code shortly.</p>
+        </div>
+
+        <div class="keypad">
+            <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+            <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+            <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+            <div class="key"></div><div class="key">0</div><div class="key">⌫</div>
+        </div>
+    </div>
+
+    <div class="footer-action">
+        <button class="btn-send">Send OTP</button>
+        <div class="protocol">🛡 IDENTITY VERIFICATION PROTOCOL</div>
+    </div>
+</div>
+
+</body>
+</html>

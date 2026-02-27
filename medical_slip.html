@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-app: #f4f5f7;
+            --white: #ffffff;
+            --text-main: #111827;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --red-accent: #c15f5f;
+            --border-light: #e2e8f0;
+            --signature-blue: #4a6096;
+            
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-serif: 'Playfair Display', serif;
+            --font-mono: 'Roboto Mono', monospace;
+            --font-script: 'Dancing Script', cursive;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: #333; /* Dark background to frame the mobile view */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Mobile Container Simulation */
+        .mobile-container {
+            width: 100%;
+            max-width: 390px;
+            height: 844px;
+            background-color: var(--bg-app);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Top Header Navigation */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 10;
+        }
+
+        .app-header i {
+            font-size: 20px;
+            color: #334155;
+            cursor: pointer;
+        }
+
+        .app-header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Scrollable Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            padding-bottom: 100px; /* Space for the floating button */
+        }
+
+        /* Main Document Card */
+        .document-card {
+            background-color: var(--white);
+            padding: 32px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Document Header Section */
+        .doc-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .red-cross {
+            font-size: 24px;
+            color: var(--red-accent);
+            margin-bottom: 12px;
+        }
+
+        .doc-title {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 1.5px;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+
+        .doc-subtitle {
+            font-size: 9px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 500;
+        }
+
+        .doc-divider {
+            height: 2px;
+            background-color: var(--text-main);
+            margin-top: 16px;
+        }
+
+        /* Patient Info Grid */
+        .patient-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            row-gap: 20px;
+            column-gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .info-group label {
+            display: block;
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-group .value {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .info-group .value.mono {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Standard Section Styles */
+        .section {
+            margin-bottom: 28px;
+        }
+
+        .section-heading {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--red-accent);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Diagnosis Box */
+        .diagnosis-box {
+            border: 1px solid var(--border-light);
+            padding: 16px;
+            background-color: var(--white);
+        }
+
+        .diagnosis-box h3 {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .diagnosis-box p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Medication Table */
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .med-table th {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-align: left;
+            padding-bottom: 12px;
+        }
+
+        .med-table th.right,
+        .med-table td.right {
+            text-align: right;
+        }
+
+        .med-table td {
+            padding: 12px 0;
+            vertical-align: top;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .med-table td.mono-col {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #334155;
+            letter-spacing: -0.5px;
+        }
+
+        .drug-name {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .drug-type {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Physician Notes Section */
+        .notes-heading {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .notes-text {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding-right: 20px;
+        }
+
+        /* Signature */
+        .signature {
+            font-family: var(--font-script);
+            font-size: 36px;
+            color: var(--signature-blue);
+            text-align: right;
+            margin-top: -10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Background Watermark */
+        .watermark {
+            position: absolute;
+            bottom: -20px;
+            left: -20px;
+            font-size: 120px;
+            color: rgba(226, 232, 240, 0.4);
+            z-index: 1;
+            transform: rotate(-15deg);
+        }
+
+        /* Floating Action Button (FAB) */
+        .fab-container {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+        }
+
+        .btn-save {
+            background-color: var(--red-accent);
+            color: var(--white);
+            border: none;
+            padding: 14px 20px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 16px rgba(193, 95, 95, 0.4);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-save:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(193, 95, 95, 0.4);
+        }
+
+        .btn-save i {
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    
+    <header class="app-header">
+        <i class="fa-solid fa-arrow-left"></i>
+        <h1>Medical Document</h1>
+        <i class="fa-solid fa-ellipsis"></i>
+    </header>
+
+    <main class="content-area">
+        <div class="document-card">
+            
+            <div class="doc-header">
+                <div class="red-cross">
+                    <i class="fa-regular fa-square-plus"></i>
+                </div>
+                <h1 class="doc-title">OFFICIAL MEDICAL<br>RECORD</h1>
+                <p class="doc-subtitle">REPUBLIC OF GHANA &bull; MINISTRY OF HEALTH APPROVED</p>
+                <div class="doc-divider"></div>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-group">
+                    <label>PATIENT NAME</label>
+                    <div class="value">Kwame Mensah</div>
+                </div>
+                <div class="info-group">
+                    <label>DATE</label>
+                    <div class="value mono">24 Oct 2023</div>
+                </div>
+                <div class="info-group">
+                    <label>DOB</label>
+                    <div class="value mono">12/05/1985</div>
+                </div>
+                <div class="info-group">
+                    <label>REF NO.</label>
+                    <div class="value mono">#MED-23-8892</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-heading">PRIMARY DIAGNOSIS</div>
+                <div class="diagnosis-box">
+                    <h3>Acute Bronchitis</h3>
+                    <p>ICD-10 Code: J20.9</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-heading">PRESCRIBED MEDICATION</div>
+                <table class="med-table">
+                    <thead>
+                        <tr>
+                            <th>Drug Name</th>
+                            <th>Dosage</th>
+                            <th class="right">Freq.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="drug-name">Benzonatate</div>
+                                <div class="drug-type">Capsules</div>
+                            </td>
+                            <td class="mono-col">100mg</td>
+                            <td class="right">3x Daily</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="drug-name">Albuterol</div>
+                                <div class="drug-type">Inhaler HFA</div>
+                            </td>
+                            <td class="mono-col">90mcg</td>
+                            <td class="right">As needed</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="drug-name">Amoxicillin</div>
+                                <div class="drug-type">Tablet</div>
+                            </td>
+                            <td class="mono-col">500mg</td>
+                            <td class="right">2x Daily</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="notes-heading">PHYSICIAN NOTES</div>
+                <p class="notes-text">
+                    "Patient advised to rest and hydrate. Monitor symptoms and return if fever persists. Avoid cold environments."
+                </p>
+                <div class="signature">Dr. Sarah</div>
+            </div>
+
+            <i class="fa-solid fa-certificate watermark"></i>
+        </div>
+    </main>
+
+    <div class="fab-container">
+        <button class="btn-save">
+            <i class="fa-solid fa-file-pdf"></i> Save to PDF
+        </button>
+    </div>
+
+</div>
+
+</body>
+</html>

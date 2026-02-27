@@ -1,0 +1,2685 @@
+[
+  {
+    "id": "41:489",
+    "name": "ai triage",
+    "type": "FRAME",
+    "properties": {
+      "position": {
+        "x": -110,
+        "y": 1226
+      },
+      "size": {
+        "width": 390,
+        "height": 797
+      },
+      "rotation": 0,
+      "styles": {
+        "fills": [
+          {
+            "type": "SOLID",
+            "color": {
+              "r": 253,
+              "g": 251,
+              "b": 247,
+              "a": 1
+            },
+            "opacity": 1
+          }
+        ],
+        "strokes": [],
+        "effects": []
+      }
+    },
+    "children": [
+      {
+        "id": "41:490",
+        "name": "Header",
+        "type": "FRAME",
+        "properties": {
+          "position": {
+            "x": -110,
+            "y": 1226
+          },
+          "size": {
+            "width": 390,
+            "height": 88
+          },
+          "rotation": 0,
+          "styles": {
+            "fills": [],
+            "strokes": [],
+            "effects": []
+          },
+          "layout": {
+            "direction": "HORIZONTAL",
+            "itemSpacing": 82.69999694824219,
+            "padding": {
+              "left": 24,
+              "top": 24,
+              "right": 24,
+              "bottom": 24
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "41:491",
+            "name": "Button",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": -86,
+                "y": 1250
+              },
+              "size": {
+                "width": 40,
+                "height": 40
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [],
+                "strokes": [],
+                "effects": []
+              },
+              "layout": {
+                "direction": "HORIZONTAL",
+                "itemSpacing": 0,
+                "padding": {
+                  "left": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "41:492",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": -73,
+                    "y": 1263
+                  },
+                  "size": {
+                    "width": 14,
+                    "height": 14
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "VERTICAL",
+                    "itemSpacing": 0,
+                    "padding": {
+                      "left": 0,
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:493",
+                    "name": "Icon",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": -73,
+                        "y": 1263
+                      },
+                      "size": {
+                        "width": 14,
+                        "height": 14
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 41,
+                              "g": 37,
+                              "b": 36,
+                              "a": 1
+                            },
+                            "opacity": 0.800000011920929
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "43:1017",
+            "name": "logo",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": 32.564208984375,
+                "y": 1259.7969970703125
+              },
+              "size": {
+                "width": 104.87158203125,
+                "height": 20.406042098999023
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [
+                  {
+                    "type": "SOLID",
+                    "color": {
+                      "r": 255,
+                      "g": 255,
+                      "b": 255,
+                      "a": 1
+                    },
+                    "opacity": 1
+                  }
+                ],
+                "strokes": [],
+                "effects": []
+              }
+            },
+            "children": [
+              {
+                "id": "43:1018",
+                "name": "Group",
+                "type": "GROUP",
+                "properties": {
+                  "position": {
+                    "x": 35.026119232177734,
+                    "y": 1262.6695556640625
+                  },
+                  "size": {
+                    "width": 15.075210571289062,
+                    "height": 15.0728759765625
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "effects": []
+                  }
+                },
+                "children": [
+                  {
+                    "id": "43:1019",
+                    "name": "Group",
+                    "type": "GROUP",
+                    "properties": {
+                      "position": {
+                        "x": 35.0261344909668,
+                        "y": 1262.6695556640625
+                      },
+                      "size": {
+                        "width": 15.0751953125,
+                        "height": 15.0728759765625
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "effects": []
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "43:1020",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "properties": {
+                          "position": {
+                            "x": 35.0261344909668,
+                            "y": 1262.6695556640625
+                          },
+                          "size": {
+                            "width": 15.0751953125,
+                            "height": 15.0728759765625
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 3,
+                                  "g": 21,
+                                  "b": 106,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "43:1021",
+                        "name": "Vector",
+                        "type": "VECTOR",
+                        "properties": {
+                          "position": {
+                            "x": 44.28567886352539,
+                            "y": 1262.68603515625
+                          },
+                          "size": {
+                            "width": 4.804149627685547,
+                            "height": 4.80419921875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 3,
+                                  "g": 21,
+                                  "b": 106,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "43:1022",
+                "name": "Group",
+                "type": "GROUP",
+                "properties": {
+                  "position": {
+                    "x": 56.391937255859375,
+                    "y": 1259.7969970703125
+                  },
+                  "size": {
+                    "width": 81.04385375976562,
+                    "height": 18.2252197265625
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "effects": []
+                  }
+                },
+                "children": [
+                  {
+                    "id": "43:1023",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 56.391937255859375,
+                        "y": 1265.621337890625
+                      },
+                      "size": {
+                        "width": 13.449867248535156,
+                        "height": 12.0047607421875
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1024",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 71.50877380371094,
+                        "y": 1265.621337890625
+                      },
+                      "size": {
+                        "width": 3.209869384765625,
+                        "height": 12.0047607421875
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1025",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 76.87318420410156,
+                        "y": 1265.2315673828125
+                      },
+                      "size": {
+                        "width": 10.654861450195312,
+                        "height": 12.7906494140625
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1026",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 88.92679595947266,
+                        "y": 1265.22900390625
+                      },
+                      "size": {
+                        "width": 11.245193481445312,
+                        "height": 12.7880859375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1027",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 102.72007751464844,
+                        "y": 1265.2303466796875
+                      },
+                      "size": {
+                        "width": 11.416908264160156,
+                        "height": 12.395751953125
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1028",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 115.38658905029297,
+                        "y": 1261.946533203125
+                      },
+                      "size": {
+                        "width": 8.745986938476562,
+                        "height": 16.0706787109375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1029",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 125.18789672851562,
+                        "y": 1265.2303466796875
+                      },
+                      "size": {
+                        "width": 12.247894287109375,
+                        "height": 12.786865234375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "43:1030",
+                    "name": "Vector",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 131.78936767578125,
+                        "y": 1259.7969970703125
+                      },
+                      "size": {
+                        "width": 2.7035064697265625,
+                        "height": 3.2362060546875
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 3,
+                              "g": 21,
+                              "b": 106,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "41:496",
+            "name": "Button",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": 216,
+                "y": 1250
+              },
+              "size": {
+                "width": 40,
+                "height": 40
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [],
+                "strokes": [],
+                "effects": []
+              },
+              "layout": {
+                "direction": "HORIZONTAL",
+                "itemSpacing": 0,
+                "padding": {
+                  "left": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "41:497",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": 228,
+                    "y": 1268
+                  },
+                  "size": {
+                    "width": 16,
+                    "height": 4
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "VERTICAL",
+                    "itemSpacing": 0,
+                    "padding": {
+                      "left": 0,
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:498",
+                    "name": "Icon",
+                    "type": "VECTOR",
+                    "properties": {
+                      "position": {
+                        "x": 228,
+                        "y": 1268
+                      },
+                      "size": {
+                        "width": 16,
+                        "height": 4
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 41,
+                              "g": 37,
+                              "b": 36,
+                              "a": 1
+                            },
+                            "opacity": 0.800000011920929
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "41:499",
+        "name": "Main",
+        "type": "FRAME",
+        "properties": {
+          "position": {
+            "x": -110,
+            "y": 1314
+          },
+          "size": {
+            "width": 390,
+            "height": 709
+          },
+          "rotation": 0,
+          "styles": {
+            "fills": [],
+            "strokes": [],
+            "effects": []
+          }
+        },
+        "children": [
+          {
+            "id": "41:500",
+            "name": "Margin",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": -66.35614013671875,
+                "y": 1508.506103515625
+              },
+              "size": {
+                "width": 302.7122802734375,
+                "height": 151.745361328125
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [],
+                "strokes": [],
+                "effects": []
+              },
+              "layout": {
+                "direction": "VERTICAL",
+                "itemSpacing": 0,
+                "padding": {
+                  "left": 0,
+                  "top": 11.321637153625488,
+                  "right": 0,
+                  "bottom": 11.321637153625488
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "41:501",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": -66.35614013671875,
+                    "y": 1508.506103515625
+                  },
+                  "size": {
+                    "width": 302.7122802734375,
+                    "height": 151.745361328125
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "HORIZONTAL",
+                    "itemSpacing": 0,
+                    "padding": {
+                      "left": 0,
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:502",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": -28.216373443603516,
+                        "y": 1524.391845703125
+                      },
+                      "size": {
+                        "width": 226.4327392578125,
+                        "height": 135.859619140625
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "HORIZONTAL",
+                        "itemSpacing": 5.660818576812744,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:503",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": -1.3274822235107422,
+                            "y": 1572.5087890625
+                          },
+                          "size": {
+                            "width": 7.076023578643799,
+                            "height": 16.982421875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:504",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 11.409358978271484,
+                            "y": 1566.847900390625
+                          },
+                          "size": {
+                            "width": 7.076023101806641,
+                            "height": 28.3040771484375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:505",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 24.146202087402344,
+                            "y": 1558.356689453125
+                          },
+                          "size": {
+                            "width": 7.076023101806641,
+                            "height": 45.2864990234375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:506",
+                        "name": "Background",
+                        "type": "FRAME",
+                        "properties": {
+                          "position": {
+                            "x": 28.391817092895508,
+                            "y": 1545.619873046875
+                          },
+                          "size": {
+                            "width": 24.0584774017334,
+                            "height": 84.9122314453125
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "41:507",
+                            "name": "Overlay+Shadow",
+                            "type": "RECTANGLE",
+                            "properties": {
+                              "position": {
+                                "x": 28.391817092895508,
+                                "y": 1545.619873046875
+                              },
+                              "size": {
+                                "width": 24.0584774017334,
+                                "height": 84.9122314453125
+                              },
+                              "rotation": 0,
+                              "styles": {
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "color": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255,
+                                      "a": 1
+                                    },
+                                    "opacity": 0.0020000000949949026
+                                  }
+                                ],
+                                "strokes": [],
+                                "effects": [
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 191,
+                                      "g": 86,
+                                      "b": 87,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 2.830409288406372
+                                    },
+                                    "radius": 4.245614051818848,
+                                    "spread": -2.830409288406372
+                                  },
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 191,
+                                      "g": 86,
+                                      "b": 87,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 7.076023101806641
+                                    },
+                                    "radius": 10.614034652709961,
+                                    "spread": -2.122807025909424
+                                  }
+                                ]
+                              }
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "41:508",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 49.6198844909668,
+                            "y": 1561.1871337890625
+                          },
+                          "size": {
+                            "width": 7.076023101806641,
+                            "height": 39.625732421875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:509",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 62.35673141479492,
+                            "y": 1552.6959228515625
+                          },
+                          "size": {
+                            "width": 7.076023101806641,
+                            "height": 56.608154296875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:510",
+                        "name": "Background",
+                        "type": "FRAME",
+                        "properties": {
+                          "position": {
+                            "x": 60.94152069091797,
+                            "y": 1535.7135009765625
+                          },
+                          "size": {
+                            "width": 35.38011932373047,
+                            "height": 118.877197265625
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "41:511",
+                            "name": "Overlay+Shadow",
+                            "type": "RECTANGLE",
+                            "properties": {
+                              "position": {
+                                "x": 60.94152069091797,
+                                "y": 1535.7135009765625
+                              },
+                              "size": {
+                                "width": 35.38011932373047,
+                                "height": 118.877197265625
+                              },
+                              "rotation": 0,
+                              "styles": {
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "color": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255,
+                                      "a": 1
+                                    },
+                                    "opacity": 0.0020000000949949026
+                                  }
+                                ],
+                                "strokes": [],
+                                "effects": [
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 251,
+                                      "g": 146,
+                                      "b": 60,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 5.660818576812744
+                                    },
+                                    "radius": 7.076023101806641,
+                                    "spread": -4.245614051818848
+                                  },
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 251,
+                                      "g": 146,
+                                      "b": 60,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 14.152046203613281
+                                    },
+                                    "radius": 17.6900577545166,
+                                    "spread": -3.5380115509033203
+                                  }
+                                ]
+                              }
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "41:512",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 87.83041381835938,
+                            "y": 1558.356689453125
+                          },
+                          "size": {
+                            "width": 7.076026916503906,
+                            "height": 45.2864990234375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:513",
+                        "name": "Background",
+                        "type": "FRAME",
+                        "properties": {
+                          "position": {
+                            "x": 86.41521453857422,
+                            "y": 1530.0526123046875
+                          },
+                          "size": {
+                            "width": 35.38011932373047,
+                            "height": 130.1988525390625
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "41:514",
+                            "name": "Overlay+Shadow",
+                            "type": "RECTANGLE",
+                            "properties": {
+                              "position": {
+                                "x": 86.41521453857422,
+                                "y": 1530.0526123046875
+                              },
+                              "size": {
+                                "width": 35.38011932373047,
+                                "height": 130.1988525390625
+                              },
+                              "rotation": 0,
+                              "styles": {
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "color": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255,
+                                      "a": 1
+                                    },
+                                    "opacity": 0.0020000000949949026
+                                  }
+                                ],
+                                "strokes": [],
+                                "effects": [
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 191,
+                                      "g": 86,
+                                      "b": 87,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 5.660818576812744
+                                    },
+                                    "radius": 7.076023101806641,
+                                    "spread": -4.245614051818848
+                                  },
+                                  {
+                                    "type": "DROP_SHADOW",
+                                    "visible": true,
+                                    "color": {
+                                      "r": 191,
+                                      "g": 86,
+                                      "b": 87,
+                                      "a": 0.20000000298023224
+                                    },
+                                    "offset": {
+                                      "x": 0,
+                                      "y": 14.152046203613281
+                                    },
+                                    "radius": 17.6900577545166,
+                                    "spread": -3.5380115509033203
+                                  }
+                                ]
+                              }
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "41:515",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 113.30410766601562,
+                            "y": 1552.6959228515625
+                          },
+                          "size": {
+                            "width": 7.076026916503906,
+                            "height": 56.608154296875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:516",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 126.04093933105469,
+                            "y": 1564.017578125
+                          },
+                          "size": {
+                            "width": 7.076019287109375,
+                            "height": 33.9649658203125
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:517",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 138.7777862548828,
+                            "y": 1558.356689453125
+                          },
+                          "size": {
+                            "width": 7.076019287109375,
+                            "height": 45.2864990234375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:518",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 151.51463317871094,
+                            "y": 1569.6783447265625
+                          },
+                          "size": {
+                            "width": 7.076019287109375,
+                            "height": 22.643310546875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:519",
+                        "name": "Gradient",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 164.25146484375,
+                            "y": 1573.9239501953125
+                          },
+                          "size": {
+                            "width": 7.076019287109375,
+                            "height": 14.152099609375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "GRADIENT_LINEAR",
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "41:520",
+                    "name": "Gradient+Blur",
+                    "type": "RECTANGLE",
+                    "properties": {
+                      "position": {
+                        "x": -66.35614013671875,
+                        "y": 1508.506103515625
+                      },
+                      "size": {
+                        "width": 302.7122802734375,
+                        "height": 144.98779296875
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "GRADIENT_LINEAR",
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": [
+                          {
+                            "type": "LAYER_BLUR",
+                            "visible": true,
+                            "radius": 42.456138610839844
+                          }
+                        ]
+                      }
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "41:521",
+            "name": "Margin",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": -54.94999694824219,
+                "y": 1346
+              },
+              "size": {
+                "width": 279.8999938964844,
+                "height": 167
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [],
+                "strokes": [],
+                "effects": []
+              },
+              "layout": {
+                "direction": "VERTICAL",
+                "itemSpacing": 0,
+                "padding": {
+                  "left": 11,
+                  "top": 0,
+                  "right": 11,
+                  "bottom": 32
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "41:522",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": -43.94999694824219,
+                    "y": 1346
+                  },
+                  "size": {
+                    "width": 257.8999938964844,
+                    "height": 135
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "VERTICAL",
+                    "itemSpacing": 12,
+                    "padding": {
+                      "left": 0,
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:523",
+                    "name": "Heading 1",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": -43.94999694824219,
+                        "y": 1346
+                      },
+                      "size": {
+                        "width": 257.8999938964844,
+                        "height": 75
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:524",
+                        "name": "Text",
+                        "type": "TEXT",
+                        "properties": {
+                          "position": {
+                            "x": -42.192935943603516,
+                            "y": 1353.5911865234375
+                          },
+                          "size": {
+                            "width": 254.74476623535156,
+                            "height": 64.067626953125
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 41,
+                                  "g": 37,
+                                  "b": 36,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "text": "[Error reading text - possibly mixed formatting]"
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "41:525",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": -43.94999694824219,
+                        "y": 1433
+                      },
+                      "size": {
+                        "width": 257.8999938964844,
+                        "height": 48
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:526",
+                        "name": "Text",
+                        "type": "TEXT",
+                        "properties": {
+                          "position": {
+                            "x": -34.96577835083008,
+                            "y": 1438.8907470703125
+                          },
+                          "size": {
+                            "width": 240.88327026367188,
+                            "height": 39.4373779296875
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 120,
+                                  "g": 113,
+                                  "b": 108,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "text": "I'm listening. Tell me about your\nsymptoms.",
+                          "font": {
+                            "family": "Inter",
+                            "style": "Medium",
+                            "size": 16
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "alignment": "CENTER"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "41:527",
+            "name": "Container",
+            "type": "FRAME",
+            "properties": {
+              "position": {
+                "x": -86,
+                "y": 1651
+              },
+              "size": {
+                "width": 342,
+                "height": 340
+              },
+              "rotation": 0,
+              "styles": {
+                "fills": [],
+                "strokes": [],
+                "effects": []
+              },
+              "layout": {
+                "direction": "VERTICAL",
+                "itemSpacing": 32,
+                "padding": {
+                  "left": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "41:528",
+                "name": "Background+Border+Shadow",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": 13.694999694824219,
+                    "y": 1651
+                  },
+                  "size": {
+                    "width": 142.6099853515625,
+                    "height": 38
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "color": {
+                          "r": 255,
+                          "g": 255,
+                          "b": 255,
+                          "a": 1
+                        },
+                        "opacity": 1
+                      }
+                    ],
+                    "strokes": [
+                      {
+                        "type": "SOLID",
+                        "color": {
+                          "r": 232,
+                          "g": 230,
+                          "b": 225,
+                          "a": 1
+                        },
+                        "opacity": 0.6000000238418579
+                      }
+                    ],
+                    "effects": [
+                      {
+                        "type": "DROP_SHADOW",
+                        "visible": true,
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0,
+                          "a": 0.05000000074505806
+                        },
+                        "offset": {
+                          "x": 0,
+                          "y": 1
+                        },
+                        "radius": 2,
+                        "spread": 0
+                      }
+                    ]
+                  },
+                  "layout": {
+                    "direction": "HORIZONTAL",
+                    "itemSpacing": 10,
+                    "padding": {
+                      "left": 16,
+                      "top": 8,
+                      "right": 16,
+                      "bottom": 8
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:529",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 32.69499969482422,
+                        "y": 1666
+                      },
+                      "size": {
+                        "width": 26,
+                        "height": 6
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "HORIZONTAL",
+                        "itemSpacing": 4,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:530",
+                        "name": "Background",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 32.69499969482422,
+                            "y": 1666
+                          },
+                          "size": {
+                            "width": 6,
+                            "height": 6
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 251,
+                                  "g": 146,
+                                  "b": 60,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:531",
+                        "name": "Background",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 42.69499969482422,
+                            "y": 1666
+                          },
+                          "size": {
+                            "width": 6,
+                            "height": 6
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 191,
+                                  "g": 86,
+                                  "b": 87,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:532",
+                        "name": "Background",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 52.69499969482422,
+                            "y": 1666
+                          },
+                          "size": {
+                            "width": 6,
+                            "height": 6
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 191,
+                                  "g": 86,
+                                  "b": 87,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "41:533",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 68.69499969482422,
+                        "y": 1661
+                      },
+                      "size": {
+                        "width": 68.61000061035156,
+                        "height": 16
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:534",
+                        "name": "Text",
+                        "type": "TEXT",
+                        "properties": {
+                          "position": {
+                            "x": 69.48388671875,
+                            "y": 1664.15234375
+                          },
+                          "size": {
+                            "width": 67.32049560546875,
+                            "height": 8.9747314453125
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 120,
+                                  "g": 113,
+                                  "b": 108,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "text": "Listening",
+                          "font": {
+                            "family": "Inter",
+                            "style": "Bold",
+                            "size": 12
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "alignment": "LEFT"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "41:535",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": 17,
+                    "y": 1713.199951171875
+                  },
+                  "size": {
+                    "width": 136,
+                    "height": 140.800048828125
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "VERTICAL",
+                    "itemSpacing": 0,
+                    "padding": {
+                      "left": 0,
+                      "top": 0,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:536",
+                    "name": "Overlay",
+                    "type": "RECTANGLE",
+                    "properties": {
+                      "position": {
+                        "x": 32.20000076293945,
+                        "y": 1713.199951171875
+                      },
+                      "size": {
+                        "width": 105.60000610351562,
+                        "height": 105.5999755859375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 191,
+                              "g": 86,
+                              "b": 87,
+                              "a": 1
+                            },
+                            "opacity": 0.20000000298023224
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "41:537",
+                    "name": "Overlay",
+                    "type": "RECTANGLE",
+                    "properties": {
+                      "position": {
+                        "x": 37,
+                        "y": 1718
+                      },
+                      "size": {
+                        "width": 96,
+                        "height": 96
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 191,
+                              "g": 86,
+                              "b": 87,
+                              "a": 1
+                            },
+                            "opacity": 0.20000000298023224
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      }
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "41:538",
+                    "name": "Button",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 17,
+                        "y": 1718
+                      },
+                      "size": {
+                        "width": 136,
+                        "height": 136
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 191,
+                              "g": 86,
+                              "b": 87,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "HORIZONTAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:539",
+                        "name": "Button:shadow",
+                        "type": "RECTANGLE",
+                        "properties": {
+                          "position": {
+                            "x": 17,
+                            "y": 1718
+                          },
+                          "size": {
+                            "width": 136,
+                            "height": 136
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 255,
+                                  "g": 255,
+                                  "b": 255,
+                                  "a": 1
+                                },
+                                "opacity": 0.0020000000949949026
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": [
+                              {
+                                "type": "DROP_SHADOW",
+                                "visible": true,
+                                "color": {
+                                  "r": 191,
+                                  "g": 86,
+                                  "b": 87,
+                                  "a": 0.30000001192092896
+                                },
+                                "offset": {
+                                  "x": 0,
+                                  "y": 8
+                                },
+                                "radius": 10,
+                                "spread": -6
+                              },
+                              {
+                                "type": "DROP_SHADOW",
+                                "visible": true,
+                                "color": {
+                                  "r": 191,
+                                  "g": 86,
+                                  "b": 87,
+                                  "a": 0.30000001192092896
+                                },
+                                "offset": {
+                                  "x": 0,
+                                  "y": 20
+                                },
+                                "radius": 25,
+                                "spread": -5
+                              }
+                            ]
+                          }
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "41:540",
+                        "name": "Container",
+                        "type": "FRAME",
+                        "properties": {
+                          "position": {
+                            "x": 73.33332824707031,
+                            "y": 1750.1666259765625
+                          },
+                          "size": {
+                            "width": 23.333335876464844,
+                            "height": 31.66666603088379
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "layout": {
+                            "direction": "VERTICAL",
+                            "itemSpacing": 0,
+                            "padding": {
+                              "left": 0,
+                              "top": 0,
+                              "right": 0,
+                              "bottom": 0
+                            }
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "41:541",
+                            "name": "Icon",
+                            "type": "VECTOR",
+                            "properties": {
+                              "position": {
+                                "x": 73.33332824707031,
+                                "y": 1750.1666259765625
+                              },
+                              "size": {
+                                "width": 23.333335876464844,
+                                "height": 31.6666259765625
+                              },
+                              "rotation": 0,
+                              "styles": {
+                                "fills": [
+                                  {
+                                    "type": "SOLID",
+                                    "color": {
+                                      "r": 255,
+                                      "g": 255,
+                                      "b": 255,
+                                      "a": 1
+                                    },
+                                    "opacity": 1
+                                  }
+                                ],
+                                "strokes": [],
+                                "effects": []
+                              }
+                            },
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "41:542",
+                "name": "Margin",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": 42.19500732421875,
+                    "y": 1834.814453125
+                  },
+                  "size": {
+                    "width": 86.12896728515625,
+                    "height": 15.185546875
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:543",
+                    "name": "Text",
+                    "type": "TEXT",
+                    "properties": {
+                      "position": {
+                        "x": 42.761573791503906,
+                        "y": 1834.814453125
+                      },
+                      "size": {
+                        "width": 85.5624008178711,
+                        "height": 13.04296875
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [
+                          {
+                            "type": "SOLID",
+                            "color": {
+                              "r": 120,
+                              "g": 113,
+                              "b": 108,
+                              "a": 1
+                            },
+                            "opacity": 1
+                          }
+                        ],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "text": "Tap to speak",
+                      "font": {
+                        "family": "Inter",
+                        "style": "Semi Bold",
+                        "size": 14
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "alignment": "LEFT"
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "41:544",
+                "name": "Button",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": -57,
+                    "y": 1881
+                  },
+                  "size": {
+                    "width": 284,
+                    "height": 58
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [
+                      {
+                        "type": "SOLID",
+                        "color": {
+                          "r": 255,
+                          "g": 255,
+                          "b": 255,
+                          "a": 1
+                        },
+                        "opacity": 1
+                      }
+                    ],
+                    "strokes": [
+                      {
+                        "type": "SOLID",
+                        "color": {
+                          "r": 232,
+                          "g": 230,
+                          "b": 225,
+                          "a": 1
+                        },
+                        "opacity": 1
+                      }
+                    ],
+                    "effects": [
+                      {
+                        "type": "DROP_SHADOW",
+                        "visible": true,
+                        "color": {
+                          "r": 0,
+                          "g": 0,
+                          "b": 0,
+                          "a": 0.05000000074505806
+                        },
+                        "offset": {
+                          "x": 0,
+                          "y": 1
+                        },
+                        "radius": 2,
+                        "spread": 0
+                      }
+                    ]
+                  },
+                  "layout": {
+                    "direction": "HORIZONTAL",
+                    "itemSpacing": 10,
+                    "padding": {
+                      "left": 24,
+                      "top": 16,
+                      "right": 24,
+                      "bottom": 16
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:545",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 0.5933341979980469,
+                        "y": 1902.5833740234375
+                      },
+                      "size": {
+                        "width": 18.33333396911621,
+                        "height": 12.8333740234375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:546",
+                        "name": "Icon",
+                        "type": "VECTOR",
+                        "properties": {
+                          "position": {
+                            "x": 0.5933341979980469,
+                            "y": 1902.5833740234375
+                          },
+                          "size": {
+                            "width": 18.33333396911621,
+                            "height": 12.8333740234375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 120,
+                                  "g": 113,
+                                  "b": 108,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "41:547",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 27.712787628173828,
+                        "y": 1899
+                      },
+                      "size": {
+                        "width": 142.91285705566406,
+                        "height": 20
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:548",
+                        "name": "Text",
+                        "type": "TEXT",
+                        "properties": {
+                          "position": {
+                            "x": 27.712787628173828,
+                            "y": 1903.814453125
+                          },
+                          "size": {
+                            "width": 142.91285705566406,
+                            "height": 13.09765625
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 41,
+                                  "g": 37,
+                                  "b": 36,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "text": "Type your symptoms",
+                          "font": {
+                            "family": "Inter",
+                            "style": "Bold",
+                            "size": 14
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "alignment": "CENTER"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "41:549",
+                "name": "Container",
+                "type": "FRAME",
+                "properties": {
+                  "position": {
+                    "x": 33.38667297363281,
+                    "y": 1968
+                  },
+                  "size": {
+                    "width": 103.22666931152344,
+                    "height": 23
+                  },
+                  "rotation": 0,
+                  "styles": {
+                    "fills": [],
+                    "strokes": [],
+                    "effects": []
+                  },
+                  "layout": {
+                    "direction": "HORIZONTAL",
+                    "itemSpacing": 8,
+                    "padding": {
+                      "left": 0,
+                      "top": 8,
+                      "right": 0,
+                      "bottom": 0
+                    }
+                  }
+                },
+                "children": [
+                  {
+                    "id": "41:550",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 33.38667297363281,
+                        "y": 1976.8333740234375
+                      },
+                      "size": {
+                        "width": 10.666667938232422,
+                        "height": 13.3333740234375
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:551",
+                        "name": "Icon",
+                        "type": "VECTOR",
+                        "properties": {
+                          "position": {
+                            "x": 33.38667297363281,
+                            "y": 1976.8333740234375
+                          },
+                          "size": {
+                            "width": 10.666667938232422,
+                            "height": 13.3333740234375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 120,
+                                  "g": 113,
+                                  "b": 108,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          }
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "41:552",
+                    "name": "Container",
+                    "type": "FRAME",
+                    "properties": {
+                      "position": {
+                        "x": 52.053340911865234,
+                        "y": 1976
+                      },
+                      "size": {
+                        "width": 84.55999755859375,
+                        "height": 15
+                      },
+                      "rotation": 0,
+                      "styles": {
+                        "fills": [],
+                        "strokes": [],
+                        "effects": []
+                      },
+                      "layout": {
+                        "direction": "VERTICAL",
+                        "itemSpacing": 0,
+                        "padding": {
+                          "left": 0,
+                          "top": 0,
+                          "right": 0,
+                          "bottom": 0
+                        }
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "41:553",
+                        "name": "Text",
+                        "type": "TEXT",
+                        "properties": {
+                          "position": {
+                            "x": 52.71074676513672,
+                            "y": 1979.626953125
+                          },
+                          "size": {
+                            "width": 83.16126251220703,
+                            "height": 7.4788818359375
+                          },
+                          "rotation": 0,
+                          "styles": {
+                            "fills": [
+                              {
+                                "type": "SOLID",
+                                "color": {
+                                  "r": 120,
+                                  "g": 113,
+                                  "b": 108,
+                                  "a": 1
+                                },
+                                "opacity": 1
+                              }
+                            ],
+                            "strokes": [],
+                            "effects": []
+                          },
+                          "text": "HIPAA Secure",
+                          "font": {
+                            "family": "Inter",
+                            "style": "Bold",
+                            "size": 10
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 15
+                          },
+                          "alignment": "LEFT"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

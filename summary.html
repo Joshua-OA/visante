@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation Summary</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f7f9fa;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
+            --white: #ffffff;
+            
+            --blue-icon: #0ea5e9;
+            --star-yellow: #fbbf24;
+            --status-green: #10b981;
+            
+            --diag-bg: #ecfdf5;
+            --diag-border: #a7f3d0;
+            --diag-text: #059669;
+            
+            --rx-bg: #fff7ed;
+            --rx-border: #ffedd5;
+            --rx-orange: #d97706;
+            --rx-icon-color: #c2410c;
+            
+            --btn-bg: #b95c5c;
+            --btn-hover: #a04f4f;
+            
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #e2e8f0; /* Darker background to frame the mobile view */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 390px;
+            height: 844px; /* Typical mobile height */
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--white);
+            border-bottom: 1px solid #f1f5f9;
+            z-index: 10;
+        }
+
+        .header .back-btn {
+            font-size: 20px;
+            color: var(--text-main);
+            cursor: pointer;
+            width: 24px;
+        }
+
+        .header .title-block {
+            text-align: center;
+        }
+
+        .header .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .header .subtitle {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header .share-btn {
+            font-size: 18px;
+            color: var(--blue-icon);
+            cursor: pointer;
+            width: 24px;
+            text-align: right;
+        }
+
+        /* --- Content Area --- */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 100px 20px; /* Extra bottom padding for fixed footer */
+        }
+
+        /* --- Doctor Card --- */
+        .doctor-card {
+            background-color: var(--white);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .doctor-avatar {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            background-color: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 24px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            background-color: var(--status-green);
+            border-radius: 50%;
+            border: 2px solid var(--white);
+        }
+
+        .doctor-info .name {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .doctor-info .specialty {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .doctor-info .stats {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .stats .star {
+            color: var(--star-yellow);
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        .stats .rating {
+            color: var(--text-main);
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        /* --- Section Headers --- */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .section-header i {
+            font-size: 18px;
+            color: var(--btn-bg); /* Using the button red color for icons */
+            width: 20px;
+            text-align: center;
+        }
+
+        .section-header .fa-stethoscope,
+        .section-header .fa-pills,
+        .section-header .fa-clipboard-list {
+             color: #7b8b9a; /* Default greyish for section icons */
+        }
+
+        .section-header .fa-stethoscope { color: #b05c65; } /* Slight red tint for stethoscope as seen in image */
+        .section-header .fa-capsules { color: #b05c65; }
+        .section-header .fa-clipboard-list { color: #64748b; } /* Grey for care plan */
+
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Diagnosis Card --- */
+        .diagnosis-card {
+            background-color: var(--diag-bg);
+            border: 1px solid var(--diag-border);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .diagnosis-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .diagnosis-desc {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tags-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tag {
+            background-color: var(--white);
+            color: var(--diag-text);
+            border: 1px solid var(--diag-border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .watermark-icon {
+            position: absolute;
+            bottom: -15px;
+            right: -10px;
+            font-size: 100px;
+            color: var(--diag-text);
+            opacity: 0.1;
+            z-index: 1;
+        }
+
+        /* --- Prescriptions Card --- */
+        .prescriptions-card {
+            background-color: var(--rx-bg);
+            border: 1px solid var(--rx-border);
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .rx-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+        }
+
+        .rx-divider {
+            height: 1px;
+            background-color: var(--rx-border);
+            margin: 0 20px;
+        }
+
+        .rx-icon-box {
+            width: 48px;
+            height: 48px;
+            background-color: var(--white);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--rx-icon-color);
+            box-shadow: 0 2px 5px rgba(217, 119, 6, 0.05);
+            flex-shrink: 0;
+        }
+
+        .rx-content {
+            flex: 1;
+        }
+
+        .rx-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .rx-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .rx-dosage {
+            background-color: var(--white);
+            color: #ea580c;
+            border: 1px solid #fed7aa;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .rx-instructions {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .rx-refills {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ea580c;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* --- Care Plan Section (Partial) --- */
+        .care-plan-card {
+            background-color: var(--white);
+            border-radius: 16px 16px 0 0;
+            height: 60px; /* Just showing the top */
+        }
+
+        /* --- Bottom Action Footer --- */
+        .bottom-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, var(--bg-color) 85%, rgba(247,249,250,0) 100%);
+            padding: 20px;
+            padding-top: 30px; /* Space for the fade */
+            text-align: center;
+            z-index: 20;
+        }
+
+        .download-btn {
+            background-color: var(--btn-bg);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            width: 100%;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .download-btn:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    
+    <header class="header">
+        <i class="fa-solid fa-arrow-left back-btn"></i>
+        <div class="title-block">
+            <div class="title">Consultation Summary</div>
+            <div class="subtitle">OCT 24, 2023 &bull; 10:30 AM</div>
+        </div>
+        <i class="fa-solid fa-share-nodes share-btn"></i>
+    </header>
+
+    <main class="content">
+        
+        <section class="doctor-card">
+            <div class="doctor-avatar">
+                <i class="fa-regular fa-user"></i>
+                <div class="status-indicator"></div>
+            </div>
+            <div class="doctor-info">
+                <div class="name">Dr. Sarah Jensen</div>
+                <div class="specialty">General Practitioner</div>
+                <div class="stats">
+                    <i class="fa-solid fa-star star"></i>
+                    <span class="rating">4.9</span> &bull; 15 min session
+                </div>
+            </div>
+        </section>
+
+        <div class="section-header">
+            <i class="fa-solid fa-stethoscope"></i>
+            <span class="section-title">DIAGNOSIS</span>
+        </div>
+        <section class="diagnosis-card">
+            <div class="diagnosis-title">Acute Bronchitis</div>
+            <div class="diagnosis-desc">
+                Inflammation of the lining of your bronchial tubes, which carry air to and from your lungs. Likely viral in origin given the symptoms.
+            </div>
+            <div class="tags-container">
+                <span class="tag">Cough</span>
+                <span class="tag">Fatigue</span>
+                <span class="tag">Mild Fever</span>
+            </div>
+            <i class="fa-solid fa-briefcase-medical watermark-icon"></i>
+        </section>
+
+        <div class="section-header">
+            <i class="fa-solid fa-capsules"></i>
+            <span class="section-title">PRESCRIPTIONS</span>
+        </div>
+        <section class="prescriptions-card">
+            <div class="rx-item">
+                <div class="rx-icon-box">
+                    <i class="fa-solid fa-prescription-bottle-medical"></i>
+                </div>
+                <div class="rx-content">
+                    <div class="rx-header-row">
+                        <div class="rx-name">Benzonatate</div>
+                        <div class="rx-dosage">100mg</div>
+                    </div>
+                    <div class="rx-instructions">Take 1 capsule by mouth three times daily as needed for cough.</div>
+                    <div class="rx-refills">
+                        <i class="fa-solid fa-arrows-rotate"></i> Refills: 1
+                    </div>
+                </div>
+            </div>
+            
+            <div class="rx-divider"></div>
+            
+            <div class="rx-item">
+                <div class="rx-icon-box">
+                    <i class="fa-solid fa-inbox"></i> </div>
+                <div class="rx-content">
+                    <div class="rx-header-row">
+                        <div class="rx-name">Albuterol Inhaler</div>
+                        <div class="rx-dosage">90mcg</div>
+                    </div>
+                    <div class="rx-instructions">2 puffs every 4-6 hours as needed for wheezing.</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-header">
+            <i class="fa-solid fa-clipboard-list"></i>
+            <span class="section-title">CARE PLAN</span>
+        </div>
+        <section class="care-plan-card">
+            </section>
+
+    </main>
+
+    <div class="bottom-footer">
+        <button class="download-btn">
+            Download Medical Slip <i class="fa-solid fa-download"></i>
+        </button>
+        <div class="secure-badge">
+            <i class="fa-solid fa-lock"></i> ENCRYPTED & HIPAA SECURE
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

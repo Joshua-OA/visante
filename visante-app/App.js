@@ -7,26 +7,30 @@ import HomeScreen from './screens/HomeScreen';
 import ResultsScreen from './screens/ResultsScreen';
 import ServiceSelectionScreen from './screens/ServiceSelectionScreen';
 import BookingScreen from './screens/BookingScreen';
-import EnterPhoneScreen from './screens/EnterPhoneScreen';
-import OtpScreen from './screens/OtpScreen';
+import PhoneVerifyScreen from './screens/PhoneVerifyScreen';
 import PaymentScreen from './screens/PaymentScreen';
+import NurseMatchingScreen from './screens/NurseMatchingScreen';
 import WaitingScreen from './screens/WaitingScreen';
 import VideoScreen from './screens/VideoScreen';
 import SummaryScreen from './screens/SummaryScreen';
 import DashboardScreen from './screens/DashboardScreen';
 
-import { saveTriageSession, setSessionServiceType, createAppointment } from './services/firestoreService';
+import {
+  saveTriageSession,
+  setSessionServiceType,
+  createAppointment,
+  fetchUserProfile,
+} from './services/firestoreService';
 
 SplashScreen.preventAutoHideAsync();
 
-// Simulate whether the user has been here before.
-// In a real app this would come from AsyncStorage / auth state.
-const IS_RETURNING_USER = true;
-
 export default function App() {
-  const [screen, setScreen] = useState(IS_RETURNING_USER ? 'dashboard' : 'home');
+  // New users start at AI triage; returning users (with phone) go to dashboard.
+  // Without persistent storage we default to 'home' (AI triage).
+  const [screen, setScreen] = useState('home');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [triageSummary, setTriageSummary] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   // ── Firestore state ──
   const [sessionId, setSessionId] = useState(null);
@@ -42,12 +46,29 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Load user profile when phone number is available
+  useEffect(() => {
+    if (!phoneNumber) return;
+    async function loadProfile() {
+      try {
+        const profile = await fetchUserProfile(phoneNumber);
+        if (profile) setUserProfile(profile);
+      } catch (e) {
+        console.warn('Could not load user profile:', e);
+      }
+    }
+    loadProfile();
+  }, [phoneNumber]);
+
   // ── Save triage to Firestore when results are shown ──
   async function handleTriageComplete(summary) {
     setTriageSummary(summary);
     setScreen('results');
     try {
-      const id = await saveTriageSession(summary);
+      const id = await saveTriageSession(summary, {
+        phoneNumber: phoneNumber || null,
+        userName: userProfile?.name || null,
+      });
       setSessionId(id);
     } catch (e) {
       console.warn('Could not save triage session:', e);
@@ -59,7 +80,7 @@ export default function App() {
     setSelectedService('pharmacy');
     setSelectedProvider(pharmacy);
     setServiceAmount(0); // free
-    setScreen('enterPhone');
+    setScreen('phoneVerify');
     try {
       if (sessionId) await setSessionServiceType(sessionId, 'pharmacy');
     } catch (e) {
@@ -82,7 +103,7 @@ export default function App() {
 
   // ── After booking confirmed, create appointment and go to enterPhone ──
   async function handleBookingConfirm({ date, time }) {
-    setScreen('enterPhone');
+    setScreen('phoneVerify');
     try {
       const id = await createAppointment({
         sessionId,
@@ -92,6 +113,7 @@ export default function App() {
         date,
         time,
         amount: serviceAmount,
+        phoneNumber: phoneNumber || null,
       });
       setAppointmentId(id);
     } catch (e) {
@@ -99,17 +121,52 @@ export default function App() {
     }
   }
 
+  // ── After payment, go to nurse matching (nurse) or waiting room (pharmacy) ──
+  function handlePaymentComplete() {
+    if (selectedService === 'nurse') {
+      setScreen('nurseMatching');
+    } else {
+      // Pharmacy flow: go to waiting room for video consultation
+      setScreen('waiting');
+    }
+  }
+
+  // ── View active booking from dashboard ──
+  function handleViewActiveBooking(booking) {
+    setAppointmentId(booking.id);
+    setSelectedService(booking.providerType);
+    setSelectedProvider({
+      id: booking.providerId,
+      name: booking.providerName,
+    });
+    const isVitalsReady = booking.status === 'vitals_complete' || booking.status === 'consultation_ready';
+    if (isVitalsReady) {
+      // Go straight to waiting room for doctor consultation
+      setScreen('waiting');
+    } else {
+      setScreen('nurseMatching');
+    }
+  }
+
   return (
     <SafeAreaProvider>
       {/* ── Returning-user dashboard ── */}
       {screen === 'dashboard' && (
-        <DashboardScreen onStartTriage={() => setScreen('home')} />
+        <DashboardScreen
+          onStartTriage={() => setScreen('home')}
+          onViewActiveBooking={handleViewActiveBooking}
+          userProfile={userProfile}
+          phoneNumber={phoneNumber}
+        />
       )}
 
       {/* ── AI triage ── */}
       {screen === 'home' && (
         <HomeScreen
           onSubmit={handleTriageComplete}
+          onClose={(userProfile || triageSummary) ? () => setScreen('dashboard') : null}
+          userProfile={userProfile}
+          phoneNumber={phoneNumber}
         />
       )}
 
@@ -123,7 +180,7 @@ export default function App() {
         />
       )}
 
-      {/* ── NEW: service selection (pharmacy vs nurse) ── */}
+      {/* ── Service selection (pharmacy vs nurse) ── */}
       {screen === 'serviceSelection' && (
         <ServiceSelectionScreen
           onBack={() => setScreen('results')}
@@ -143,35 +200,27 @@ export default function App() {
         />
       )}
 
-      {/* ── Phone entry ── */}
-      {screen === 'enterPhone' && (
-        <EnterPhoneScreen
+      {/* ── Phone auto-detection & verification ── */}
+      {screen === 'phoneVerify' && (
+        <PhoneVerifyScreen
           onBack={() =>
             selectedService === 'nurse'
               ? setScreen('booking')
               : setScreen('serviceSelection')
           }
-          onSendOtp={(num) => {
+          onVerified={(num) => {
             setPhoneNumber(num);
-            setScreen('otp');
+            setScreen('payment');
           }}
-        />
-      )}
-
-      {/* ── OTP ── */}
-      {screen === 'otp' && (
-        <OtpScreen
-          onBack={() => setScreen('enterPhone')}
-          onVerify={() => setScreen('payment')}
-          phoneNumber={phoneNumber}
+          detectedPhone=""
         />
       )}
 
       {/* ── Payment ── */}
       {screen === 'payment' && (
         <PaymentScreen
-          onBack={() => setScreen('otp')}
-          onPay={() => setScreen('waiting')}
+          onBack={() => setScreen('phoneVerify')}
+          onPay={handlePaymentComplete}
           phoneNumber={phoneNumber}
           amount={serviceAmount}
           selectedService={selectedService}
@@ -180,10 +229,23 @@ export default function App() {
         />
       )}
 
-      {/* ── Waiting room ── */}
+      {/* ── Nurse matching (Uber-like flow) ── */}
+      {screen === 'nurseMatching' && (
+        <NurseMatchingScreen
+          onBack={() => setScreen('payment')}
+          onCancel={() => setScreen('dashboard')}
+          onGoToDashboard={() => setScreen('dashboard')}
+          onConsultDoctor={() => setScreen('waiting')}
+          appointmentId={appointmentId}
+          provider={selectedProvider}
+          serviceType={selectedService}
+        />
+      )}
+
+      {/* ── Waiting room (for video consultation) ── */}
       {screen === 'waiting' && (
         <WaitingScreen
-          onBack={() => setScreen('payment')}
+          onBack={() => selectedService === 'nurse' ? setScreen('nurseMatching') : setScreen('payment')}
           onCheckConnection={() => setScreen('video')}
           onCancel={() => setScreen('dashboard')}
           onJoin={() => setScreen('video')}

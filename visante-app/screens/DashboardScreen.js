@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, {
   Line, Polyline, Path, Circle, Rect, Polygon,
 } from 'react-native-svg';
-import { fetchLatestAppointment, fetchPastAppointments } from '../services/firestoreService';
+import { fetchLatestAppointment, subscribeToActiveBookings } from '../services/firestoreService';
 
 // ─── Design tokens (mirrors app-wide system) ─────────────────────────────────
 const PRIMARY_RED = '#bb5454';
@@ -123,14 +123,34 @@ function SectionHeader({ icon, title, color }) {
   );
 }
 
+// ─── Status labels for active bookings ────────────────────────────────────────
+const STATUS_LABELS = {
+  searching: { label: 'Searching for nurse', color: '#f47b2a', bg: '#fff7ed' },
+  nurse_accepted: { label: 'Nurse on the way', color: '#f47b2a', bg: '#fff7ed' },
+  vitals_in_progress: { label: 'Vitals in progress', color: '#3b82f6', bg: '#eff6ff' },
+  vitals_complete: { label: 'Vitals ready', color: '#10b981', bg: '#ecfdf5' },
+  consultation_ready: { label: 'Ready for doctor', color: '#10b981', bg: '#ecfdf5' },
+  confirmed: { label: 'Confirmed', color: '#10b981', bg: '#ecfdf5' },
+};
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
-export default function DashboardScreen({ onStartTriage }) {
+export default function DashboardScreen({ onStartTriage, onViewActiveBooking, userProfile, phoneNumber }) {
   const insets = useSafeAreaInsets();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // ── Firestore data ──
   const [latestAppt, setLatestAppt] = useState(null);
+  const [activeBookings, setActiveBookings] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+
+  const displayName = userProfile?.name ?? 'there';
+  const initials = userProfile?.name
+    ? userProfile.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()
+    : '?';
+
+  // Get greeting based on time of day
+  const hour = new Date().getHours();
+  const greetingText = hour < 12 ? 'Good morning,' : hour < 17 ? 'Good afternoon,' : 'Good evening,';
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -146,6 +166,15 @@ export default function DashboardScreen({ onStartTriage }) {
     loadDashboardData();
   }, []);
 
+  // Real-time active bookings listener
+  useEffect(() => {
+    if (!phoneNumber) return;
+    const unsub = subscribeToActiveBookings(phoneNumber, (bookings) => {
+      setActiveBookings(bookings);
+    });
+    return unsub;
+  }, [phoneNumber]);
+
   function handlePressTriage() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Animated.sequence([
@@ -160,11 +189,11 @@ export default function DashboardScreen({ onStartTriage }) {
       {/* ── Header ── */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Good morning,</Text>
-          <Text style={styles.patientName}>Kofi Mensah</Text>
+          <Text style={styles.greeting}>{greetingText}</Text>
+          <Text style={styles.patientName}>{displayName}</Text>
         </View>
         <View style={styles.avatarBadge}>
-          <Text style={styles.avatarInitials}>KM</Text>
+          <Text style={styles.avatarInitials}>{initials}</Text>
         </View>
       </View>
 
@@ -174,6 +203,51 @@ export default function DashboardScreen({ onStartTriage }) {
         showsVerticalScrollIndicator={false}
       >
 
+        {/* ── Active Bookings ── */}
+        {activeBookings.map((booking) => {
+          const statusInfo = STATUS_LABELS[booking.status] || STATUS_LABELS.confirmed;
+          const isVitalsReady = booking.status === 'vitals_complete' || booking.status === 'consultation_ready';
+          return (
+            <TouchableOpacity
+              key={booking.id}
+              style={[styles.card, styles.pendingCard]}
+              onPress={() => onViewActiveBooking && onViewActiveBooking(booking)}
+              activeOpacity={0.8}
+            >
+              <SectionHeader
+                icon={<CalendarIcon />}
+                title="Active Booking"
+                color={ORANGE}
+              />
+
+              <View style={styles.apptRow}>
+                <View style={styles.docAvatar} />
+                <View style={styles.apptInfo}>
+                  <Text style={styles.docName}>{booking.providerName ?? 'Provider'}</Text>
+                  <View style={styles.metaRow}>
+                    <StethoscopeIcon />
+                    <Text style={styles.metaText}>
+                      {booking.providerType === 'pharmacy' ? 'Pharmacy' : 'Home Care Nurse'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
+                <View style={[styles.statusBadgeDot, { backgroundColor: statusInfo.color }]} />
+                <Text style={[styles.statusBadgeText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+              </View>
+
+              {isVitalsReady && (
+                <View style={styles.consultBanner}>
+                  <Text style={styles.consultBannerText}>Tap to consult a doctor</Text>
+                  <ArrowRightIcon />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+
         {/* ── Last Vitals ── */}
         <View style={styles.card}>
           <SectionHeader
@@ -181,13 +255,15 @@ export default function DashboardScreen({ onStartTriage }) {
             title="Last Vitals"
             color={GREEN}
           />
-          <Text style={styles.recordDate}>Recorded at last pharmacy visit</Text>
+          <Text style={styles.recordDate}>
+            {latestAppt?.vitals ? 'From your most recent appointment' : 'Recorded at last pharmacy visit'}
+          </Text>
 
           <View style={styles.vitalsGrid}>
-            <VitalChip label="Blood Pressure" value="—" unit="mmHg" />
-            <VitalChip label="Heart Rate" value="—" unit="bpm" />
-            <VitalChip label="Temperature" value="—" />
-            <VitalChip label="SpO2" value="—" />
+            <VitalChip label="Blood Pressure" value={latestAppt?.vitals?.blood_pressure ?? '—'} unit="mmHg" />
+            <VitalChip label="Heart Rate" value={latestAppt?.vitals?.heart_rate ?? '—'} unit="bpm" />
+            <VitalChip label="Temperature" value={latestAppt?.vitals?.temperature ?? '—'} />
+            <VitalChip label="SpO2" value={latestAppt?.vitals?.spo2 ?? '—'} />
           </View>
         </View>
 
@@ -450,33 +526,40 @@ const styles = StyleSheet.create({
     color: TEXT_DARK,
   },
 
-  // Pending status row
-  pendingStatusRow: {
+  // Active booking status badge
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  confirmedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: GREEN_LIGHT,
-    borderWidth: 1,
-    borderColor: GREEN_BORDER,
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    marginBottom: 8,
   },
-  confirmedText: {
+  statusBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: GREEN,
   },
-  cancelLink: {
+  consultBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: GREEN,
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  consultBannerText: {
     fontSize: 13,
     fontWeight: '600',
-    color: TEXT_LIGHT,
-    textDecorationLine: 'underline',
+    color: '#ffffff',
   },
 
   // FAB

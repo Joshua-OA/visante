@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visanté - Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* Reset & Base Styles */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #E5E5E5; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #111827;
+    }
+
+    /* Mobile Container App Frame */
+    .app-container {
+        width: 375px;
+        height: 812px;
+        background-color: #FFFFFF;
+        border-radius: 40px;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #F3F4F6;
+        flex-shrink: 0;
+    }
+
+    .header-icon {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #0A1B44;
+        letter-spacing: -0.5px;
+    }
+
+    /* Scrollable Content Area */
+    .content-area {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 24px;
+    }
+
+    /* Hide scrollbar for seamless look */
+    .content-area::-webkit-scrollbar {
+        display: none;
+    }
+    .content-area {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Provider Profile */
+    .provider-profile {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .profile-img-container {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+    }
+
+    .profile-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .status-dot {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 14px;
+        height: 14px;
+        background-color: #C15B5B;
+        border: 2px solid #FFFFFF;
+        border-radius: 50%;
+    }
+
+    .provider-info h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 2px;
+    }
+
+    .provider-info p {
+        color: #6B7280;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .rating {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .rating span {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+
+    /* Calendar Section */
+    .calendar-section {
+        margin-bottom: 32px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .calendar-header h3 {
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .calendar-nav {
+        display: flex;
+        gap: 16px;
+        color: #6B7280;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        row-gap: 20px;
+        text-align: center;
+    }
+
+    .day-name {
+        font-size: 12px;
+        font-weight: 500;
+        color: #9CA3AF;
+        margin-bottom: 8px;
+    }
+
+    .date-cell {
+        font-size: 15px;
+        font-weight: 500;
+        color: #1F2937;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 36px;
+        height: 36px;
+        margin: 0 auto;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .date-muted {
+        color: #CBD5E1;
+        cursor: default;
+    }
+
+    .date-selected {
+        background-color: #F47B2A;
+        color: #FFFFFF;
+        box-shadow: 0 6px 16px rgba(244, 123, 42, 0.3);
+    }
+
+    /* Available Times Section */
+    .times-section {
+        margin-bottom: 16px;
+    }
+
+    .times-section > h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .time-group {
+        margin-bottom: 24px;
+    }
+
+    .time-group-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .time-slot {
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 12px 0;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 500;
+        color: #374151;
+        background-color: #FFFFFF;
+        cursor: pointer;
+    }
+
+    .time-slot.selected {
+        border-color: #C05859;
+        background-color: #FCF4F4;
+        color: #C05859;
+    }
+
+    .time-slot.disabled {
+        background-color: #F9FAFB;
+        color: #9CA3AF;
+        text-decoration: line-through;
+        cursor: default;
+    }
+
+    /* Bottom Sticky Bar */
+    .bottom-bar {
+        padding: 20px 24px;
+        background-color: #FFFFFF;
+        border-top: 1px solid #F3F4F6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .cost-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .cost-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #6B7280;
+    }
+
+    .cost-amount {
+        font-size: 20px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .confirm-btn {
+        background-color: #B85A5B;
+        color: #FFFFFF;
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 8px 16px rgba(184, 90, 91, 0.2);
+    }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <header class="header">
+        <div class="header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </div>
+        <div class="logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A1B44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 15 3 17 5 18L9 11L12 16L17 7"></path>
+            </svg>
+            visanté
+        </div>
+        <div class="header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#111827">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="content-area">
+        
+        <div class="provider-profile">
+            <div class="profile-img-container">
+                <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150" alt="Kwame Ansah">
+                <div class="status-dot"></div>
+            </div>
+            <div class="provider-info">
+                <h2>Kwame Ansah</h2>
+                <p>Physician Assistant</p>
+                <div class="rating">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    4.9 <span>(124 reviews)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h3>October 2026</h3>
+                <div class="calendar-nav">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="day-name">SU</div>
+                <div class="day-name">MO</div>
+                <div class="day-name">TU</div>
+                <div class="day-name">WE</div>
+                <div class="day-name">TH</div>
+                <div class="day-name">FR</div>
+                <div class="day-name">SA</div>
+
+                <div class="date-cell date-muted">29</div>
+                <div class="date-cell date-muted">30</div>
+                <div class="date-cell date-muted">1</div>
+                <div class="date-cell date-muted">2</div>
+                <div class="date-cell date-muted">3</div>
+                <div class="date-cell date-muted">4</div>
+                <div class="date-cell date-muted">5</div>
+
+                <div class="date-cell date-muted">6</div>
+                <div class="date-cell date-muted">7</div>
+                <div class="date-cell date-muted">8</div>
+                <div class="date-cell date-muted">9</div>
+                <div class="date-cell date-muted">10</div>
+                <div class="date-cell date-muted">11</div>
+                <div class="date-cell date-muted">12</div>
+
+                <div class="date-cell date-muted">13</div>
+                <div class="date-cell date-selected">14</div>
+                <div class="date-cell">15</div>
+                <div class="date-cell date-muted">16</div>
+                <div class="date-cell date-muted">17</div>
+                <div class="date-cell">18</div>
+                <div class="date-cell">19</div>
+            </div>
+        </div>
+
+        <div class="times-section">
+            <h3>Available Times</h3>
+            
+            <div class="time-group">
+                <div class="time-group-title">Morning</div>
+                <div class="time-grid">
+                    <div class="time-slot selected">09:00 AM</div>
+                    <div class="time-slot">09:30 AM</div>
+                    <div class="time-slot">10:00 AM</div>
+                    <div class="time-slot disabled">10:30 AM</div>
+                    <div class="time-slot">11:00 AM</div>
+                    <div class="time-slot">11:30 AM</div>
+                </div>
+            </div>
+
+            <div class="time-group">
+                <div class="time-group-title">Afternoon</div>
+                <div class="time-grid">
+                    <div class="time-slot">01:00 PM</div>
+                    <div class="time-slot">01:30 PM</div>
+                    <div class="time-slot">02:00 PM</div>
+                </div>
+            </div>
+
+            <div class="time-group" style="margin-bottom: 0;">
+                <div class="time-group-title">Evening</div>
+                </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-bar">
+        <div class="cost-info">
+            <span class="cost-label">Total Cost</span>
+            <span class="cost-amount">GHS 50.00</span>
+        </div>
+        <button class="confirm-btn">
+            Confirm Booking
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </button>
+    </div>
+
+</div>
+
+</body>
+</html>

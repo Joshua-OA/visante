@@ -5,7 +5,9 @@ import {
     collection,
     addDoc,
     getDocs,
+    getDoc,
     doc,
+    setDoc,
     updateDoc,
     onSnapshot,
     serverTimestamp,
@@ -17,6 +19,32 @@ import {
 import { db } from './firebase';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// USER PROFILES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Save or update a user profile, keyed by phone number.
+ */
+export async function saveUserProfile({ phoneNumber, name, age, gender }) {
+    await setDoc(doc(db, 'users', phoneNumber), {
+        phoneNumber,
+        name,
+        age,
+        gender,
+        updatedAt: serverTimestamp(),
+    }, { merge: true });
+}
+
+/**
+ * Fetch a user profile by phone number. Returns null if not found.
+ */
+export async function fetchUserProfile(phoneNumber) {
+    const snap = await getDoc(doc(db, 'users', phoneNumber));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SESSIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -24,9 +52,11 @@ import { db } from './firebase';
  * Save a completed triage session to Firestore.
  * Returns the new document's ID.
  */
-export async function saveTriageSession(triageSummary) {
+export async function saveTriageSession(triageSummary, { phoneNumber, userName } = {}) {
     const ref = await addDoc(collection(db, 'sessions'), {
         ...triageSummary,
+        phoneNumber: phoneNumber ?? null,
+        userName: userName ?? null,
         serviceType: null,      // set later when user picks pharmacy / nurse
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -93,23 +123,41 @@ export async function fetchNurses() {
 
 /**
  * Create an appointment document.
+ * For nurse bookings, status starts as 'searching' (Uber-like matching).
+ * For pharmacy, status starts as 'confirmed'.
+ * Status flow (nurse): searching → nurse_accepted → vitals_in_progress → vitals_complete → consultation_ready → completed
+ * Status flow (pharmacy): confirmed → vitals_in_progress → vitals_complete → consultation_ready → completed
  * Returns the new appointment ID.
  */
-export async function createAppointment({ sessionId, providerType, providerId, providerName, date, time, amount }) {
+export async function createAppointment({ sessionId, providerType, providerId, providerName, date, time, amount, phoneNumber }) {
+    const initialStatus = providerType === 'nurse' ? 'searching' : 'confirmed';
     const ref = await addDoc(collection(db, 'appointments'), {
         sessionId,
         providerType,   // 'nurse' | 'pharmacy'
         providerId,
         providerName,
+        phoneNumber: phoneNumber ?? null,
         date,
         time,
         amount,
+        vitals: null,
         paymentStatus: 'pending',
-        status: 'confirmed',
+        status: initialStatus,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
     });
     return ref.id;
+}
+
+/**
+ * Update vitals on an appointment (called by nurse/pharmacy provider side).
+ */
+export async function updateAppointmentVitals(appointmentId, vitals) {
+    await updateDoc(doc(db, 'appointments', appointmentId), {
+        vitals,
+        status: 'vitals_complete',
+        updatedAt: serverTimestamp(),
+    });
 }
 
 /**
@@ -145,6 +193,42 @@ export async function fetchLatestAppointment() {
     if (snap.empty) return null;
     const d = snap.docs[0];
     return { id: d.id, ...d.data() };
+}
+
+/**
+ * Fetch active (non-completed/cancelled) appointments for a phone number.
+ * Used by Dashboard to show pending bookings.
+ */
+export async function fetchActiveBookings(phoneNumber) {
+    const q = query(
+        collection(db, 'appointments'),
+        where('phoneNumber', '==', phoneNumber),
+        orderBy('createdAt', 'desc'),
+    );
+    const snap = await getDocs(q);
+    // Filter client-side since Firestore doesn't support NOT IN on status easily
+    const active = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((a) => !['completed', 'cancelled'].includes(a.status));
+    return active;
+}
+
+/**
+ * Subscribe to active bookings for a phone number (real-time).
+ * Returns an unsubscribe function.
+ */
+export function subscribeToActiveBookings(phoneNumber, callback) {
+    const q = query(
+        collection(db, 'appointments'),
+        where('phoneNumber', '==', phoneNumber),
+        orderBy('createdAt', 'desc'),
+    );
+    return onSnapshot(q, (snap) => {
+        const active = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((a) => !['completed', 'cancelled'].includes(a.status));
+        callback(active);
+    });
 }
 
 /**
@@ -256,4 +340,100 @@ export async function seedNurses() {
         await addDoc(collection(db, 'nurses'), n);
     }
     console.log('Nurses seeded ✓');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDICAL RECORDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch medical records for a given phone number.
+ */
+export async function fetchMedicalRecords(phoneNumber) {
+    const q = query(
+        collection(db, 'medical_records'),
+        where('phoneNumber', '==', phoneNumber),
+        orderBy('date', 'desc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Seed 3 dummy medical records linked to 0552354808.
+ * Call this ONCE from a dev/admin context.
+ */
+export async function seedMedicalRecords() {
+    const PHONE = '0552354808';
+    const records = [
+        {
+            phoneNumber: PHONE,
+            patientName: 'Kofi Mensah',
+            date: '2025-12-10',
+            type: 'Pharmacy Vitals Check',
+            provider: 'HealthPlus Pharmacy',
+            chief_complaint: 'Persistent headaches and dizziness',
+            diagnosis: 'Mild hypertension (Stage 1)',
+            vitals: {
+                blood_pressure: '142/90',
+                heart_rate: '82 bpm',
+                temperature: '36.8°C',
+                spo2: '97%',
+                weight: '78 kg',
+            },
+            prescription: [
+                { name: 'Amlodipine 5mg', dosage: '1 tablet daily', duration: '30 days' },
+                { name: 'Paracetamol 500mg', dosage: '2 tablets as needed', duration: '7 days' },
+            ],
+            notes: 'Patient advised to reduce salt intake and monitor blood pressure weekly. Follow-up in 4 weeks.',
+            status: 'completed',
+        },
+        {
+            phoneNumber: PHONE,
+            patientName: 'Kofi Mensah',
+            date: '2025-11-22',
+            type: 'Nurse Home Visit',
+            provider: 'Sister Abena Osei',
+            chief_complaint: 'Fever, body aches, and fatigue for 3 days',
+            diagnosis: 'Malaria (Plasmodium falciparum — positive RDT)',
+            vitals: {
+                blood_pressure: '118/76',
+                heart_rate: '96 bpm',
+                temperature: '38.9°C',
+                spo2: '96%',
+                weight: '78 kg',
+            },
+            prescription: [
+                { name: 'Artemether-Lumefantrine (Coartem)', dosage: '4 tablets twice daily', duration: '3 days' },
+                { name: 'Paracetamol 1g', dosage: 'Every 8 hours', duration: '3 days' },
+                { name: 'ORS sachets', dosage: '1 litre daily', duration: '3 days' },
+            ],
+            notes: 'Malaria RDT positive. Patient was dehydrated. IV fluids administered on site. Rest and hydration advised.',
+            status: 'completed',
+        },
+        {
+            phoneNumber: PHONE,
+            patientName: 'Kofi Mensah',
+            date: '2025-10-05',
+            type: 'Pharmacy Vitals Check',
+            provider: 'Ernest Chemists',
+            chief_complaint: 'Routine check-up, no active complaints',
+            diagnosis: 'Normal vitals — no abnormalities detected',
+            vitals: {
+                blood_pressure: '120/78',
+                heart_rate: '74 bpm',
+                temperature: '36.5°C',
+                spo2: '98%',
+                weight: '77 kg',
+            },
+            prescription: [],
+            notes: 'Routine wellness check. All vitals within normal range. Patient in good health. Advised to continue healthy lifestyle.',
+            status: 'completed',
+        },
+    ];
+
+    for (const rec of records) {
+        await addDoc(collection(db, 'medical_records'), rec);
+    }
+    console.log('Medical records seeded ✓ (3 records for 0552354808)');
 }

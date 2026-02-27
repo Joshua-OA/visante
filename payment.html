@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #fcfbfa;
+            --text-dark: #0f172a;
+            --text-gray: #64748b;
+            --primary-red: #ba5559;
+            --card-bg: #fcf1f3;
+            --card-border: #f7d4d8;
+            --text-crimson: #6e1c24;
+            --text-crimson-light: #b04652;
+            --white: #ffffff;
+            --border-light: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: var(--bg-main);
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 24px 10px;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #334155;
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #475569;
+        }
+
+        .header-spacer {
+            width: 24px;
+        }
+
+        /* Scrollable Content Area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 24px 120px; /* bottom padding for sticky footer */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Title Section */
+        .lock-icon-wrapper {
+            background: #fce8eb;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 22px;
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 24px;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .summary-title {
+            color: var(--text-crimson);
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .summary-subtitle {
+            color: var(--text-crimson-light);
+            font-size: 12px;
+        }
+
+        .summary-price {
+            color: var(--text-crimson);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: #f1d3d6;
+            margin: 16px 0;
+        }
+
+        .subtotal-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .subtotal-label {
+            color: var(--text-crimson-light);
+            font-size: 14px;
+        }
+        
+        .subtotal-value {
+            color: var(--text-crimson);
+            font-size: 14px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .total-label {
+            color: var(--text-crimson);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .total-value {
+            color: var(--text-crimson);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Provider Section */
+        .section-title {
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .provider-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .provider-card {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: var(--white);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .provider-card.active {
+            border: 1.5px solid var(--primary-red);
+            background: #fffafa;
+        }
+
+        /* Custom Radio Button */
+        .radio-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1.5px solid #cbd5e1;
+            margin-right: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .provider-card.active .radio-btn {
+            border-color: var(--primary-red);
+            border-width: 2px;
+        }
+
+        .radio-inner {
+            width: 10px;
+            height: 10px;
+            background: var(--primary-red);
+            border-radius: 50%;
+            display: none;
+        }
+
+        .provider-card.active .radio-inner {
+            display: block;
+        }
+
+        /* Logos styled with CSS */
+        .logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 12px;
+        }
+
+        .logo-mtn {
+            background-color: #ffcc00;
+            color: #000;
+            font-weight: 800;
+            font-size: 13px;
+        }
+
+        .logo-airtel {
+            background-color: #e0f2fe;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .provider-info {
+            flex: 1;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .provider-meta {
+            font-size: 12px;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Sticky Footer */
+        .sticky-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 24px 30px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(186, 85, 89, 0.25);
+            margin-bottom: 16px;
+        }
+
+        .security-badge {
+            font-size: 10px;
+            color: var(--primary-red);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <div class="header">
+        <div class="header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </div>
+        <div class="header-title">CHECKOUT</div>
+        <div class="header-spacer"></div>
+    </div>
+
+    <div class="content">
+        <div class="lock-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ba5559" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+        <h1>Secure Payment</h1>
+        <p class="subtitle">Complete your consultation booking</p>
+
+        <div class="summary-card">
+            <div class="summary-row">
+                <div>
+                    <div class="summary-title">Tele-health Consultation</div>
+                    <div class="summary-subtitle">Dr. Sarah Wilson • 30 min</div>
+                </div>
+                <div class="summary-price">GH₵ 50.00</div>
+            </div>
+            
+            <div class="summary-divider"></div>
+            
+            <div class="subtotal-row">
+                <div class="subtotal-label">Subtotal</div>
+                <div class="subtotal-value">GH₵ 50.00</div>
+            </div>
+            <div class="total-row">
+                <div class="total-label">Total</div>
+                <div class="total-value">GH₵ 50.00</div>
+            </div>
+        </div>
+
+        <div class="section-title">Mobile Money Provider</div>
+        
+        <div class="provider-list">
+            <div class="provider-card active">
+                <div class="radio-btn">
+                    <div class="radio-inner"></div>
+                </div>
+                <div class="logo logo-mtn">MTN</div>
+                <div class="provider-info">
+                    <div class="provider-name">MTN MoMo</div>
+                    <div class="provider-meta">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ba5559" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        024 412 3456
+                    </div>
+                </div>
+            </div>
+
+            <div class="provider-card">
+                <div class="radio-btn">
+                    <div class="radio-inner"></div>
+                </div>
+                <div class="logo logo-airtel">Airtel<br>Tigo</div>
+                <div class="provider-info">
+                    <div class="provider-name">AirtelTigo Money</div>
+                    <div class="provider-meta">Pay with 027...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sticky-footer">
+        <button class="btn-pay">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Pay GH₵ 50.00
+        </button>
+        <div class="security-badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            BANK-LEVEL SECURITY ENCRYPTED
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

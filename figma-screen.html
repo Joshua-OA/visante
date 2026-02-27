@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Triage Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            /* Background outside the app simulation to make it pop if viewed on desktop */
+            background-color: #e8e8e8; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            background-color: #faf9f6; /* Off-white cream background */
+            width: 100%;
+            max-width: 414px; /* standard mobile width */
+            height: 896px; /* standard mobile height */
+            border-radius: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 24px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #0b1a64;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo svg {
+            color: #0b1a64;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            color: #2b2b2b;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            padding: 0 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: #717171;
+            font-weight: 400;
+            line-height: 1.5;
+            margin-bottom: 50px;
+            padding: 0 20px;
+        }
+
+        /* --- SOUNDWAVE VISUALIZATION --- */
+        .soundwave-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .soundwave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 120px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .soundwave-glow {
+            position: absolute;
+            width: 250px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(247, 169, 146, 0.3) 0%, rgba(250, 249, 246, 0) 70%);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .bar {
+            width: 6px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #f5a782 0%, #ba464a 100%);
+            z-index: 1;
+        }
+
+        /* Listening Badge */
+        .listening-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            border-radius: 30px;
+            padding: 10px 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            font-size: 12px;
+            font-weight: 700;
+            color: #7a7a7a;
+            letter-spacing: 1px;
+        }
+
+        .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .dot:nth-child(1) { background-color: #f6985d; }
+        .dot:nth-child(2) { background-color: #ce5a55; }
+        .dot:nth-child(3) { background-color: #ba464a; }
+
+        /* --- MICROPHONE BUTTON --- */
+        .mic-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        .mic-ring {
+            width: 112px;
+            height: 112px;
+            background-color: #f4dbdb;
+            border-radius: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .mic-btn {
+            width: 92px;
+            height: 92px;
+            background-color: #ba464a;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 8px 20px rgba(186, 70, 74, 0.25);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .mic-btn:active {
+            transform: scale(0.95);
+        }
+
+        .tap-text {
+            color: #717171;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* --- TYPE SYMPTOMS BUTTON --- */
+        .type-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #eaeaea;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2b2b2b;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            cursor: pointer;
+            margin-bottom: auto; /* pushes footer down */
+            transition: background 0.2s ease;
+        }
+
+        .type-btn:hover {
+            background: #fafafa;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding-top: 20px;
+            color: #a8a8a8;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: auto;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header class="header">
+            <button class="icon-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.21-.716 4.25-1.92 5.92L18 22z"></path>
+                    <path d="M12 8v8"></path>
+                    <path d="M8 12h8"></path>
+                </svg>
+                visanté
+            </div>
+            <button class="icon-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="2"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <circle cx="19" cy="12" r="2"></circle>
+                </svg>
+            </button>
+        </header>
+
+        <main>
+            <h1>How can I help you today?</h1>
+            <p class="subtitle">I'm listening. Tell me about your symptoms.</p>
+
+            <div class="soundwave-section">
+                <div class="soundwave-container">
+                    <div class="soundwave-glow"></div>
+                    <div class="bar" style="height: 15px; opacity: 0.5;"></div>
+                    <div class="bar" style="height: 25px; opacity: 0.6;"></div>
+                    <div class="bar" style="height: 40px; opacity: 0.7;"></div>
+                    <div class="bar" style="height: 65px; opacity: 0.8;"></div>
+                    <div class="bar" style="height: 35px; opacity: 0.85;"></div>
+                    <div class="bar" style="height: 80px; opacity: 0.9;"></div>
+                    <div class="bar" style="height: 45px; opacity: 0.95;"></div>
+                    <div class="bar" style="height: 95px;"></div>
+                    <div class="bar" style="height: 115px;"></div> <div class="bar" style="height: 75px;"></div>
+                    <div class="bar" style="height: 45px; opacity: 0.95;"></div>
+                    <div class="bar" style="height: 85px; opacity: 0.9;"></div>
+                    <div class="bar" style="height: 35px; opacity: 0.85;"></div>
+                    <div class="bar" style="height: 60px; opacity: 0.8;"></div>
+                    <div class="bar" style="height: 40px; opacity: 0.7;"></div>
+                    <div class="bar" style="height: 25px; opacity: 0.6;"></div>
+                    <div class="bar" style="height: 15px; opacity: 0.5;"></div>
+                </div>
+
+                <div class="listening-badge">
+                    <div class="dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    LISTENING
+                </div>
+            </div>
+
+            <div class="mic-section">
+                <div class="mic-ring">
+                    <button class="mic-btn">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                        </svg>
+                    </button>
+                </div>
+                <span class="tap-text">Tap to speak</span>
+            </div>
+
+            <button class="type-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                    <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"></path>
+                </svg>
+                Type your symptoms
+            </button>
+        </main>
+
+        <footer class="footer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+            </svg>
+            HIPAA SECURE
+        </footer>
+
+    </div>
+
+</body>
+</html>

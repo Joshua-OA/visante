@@ -8,7 +8,8 @@ import {
   Image,
   TextInput,
   StatusBar,
-  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,20 +17,20 @@ import Svg, { Line, Rect, Path, Circle } from 'react-native-svg';
 import { useTriageSession as useRealtimeSession } from '../hooks/useTriageSession';
 
 // ─── Colors ─────────────────────────────────────────────────────────────────
-const BG         = '#faf9f6';
+const BG = '#faf9f6';
 const ACCENT_TOP = '#f5a782';
 const ACCENT_BTM = '#ba464a';
-const TEXT_DARK  = '#2b2b2b';
+const TEXT_DARK = '#2b2b2b';
 const TEXT_MUTED = '#717171';
-const TEXT_GRAY  = '#a8a8a8';
-const BORDER     = '#eaeaea';
-const WHITE      = '#ffffff';
-const MIC_RING   = '#f4dbdb';
-const AI_BLUE    = '#3b82f6';
-const USER_ORANGE= '#f47b2a';
+const TEXT_GRAY = '#a8a8a8';
+const BORDER = '#eaeaea';
+const WHITE = '#ffffff';
+const MIC_RING = '#f4dbdb';
+const AI_BLUE = '#3b82f6';
+const USER_ORANGE = '#f47b2a';
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
-const BASE_HEIGHTS   = [15, 25, 40, 65, 35, 80, 45, 95, 115, 75, 45, 85, 35, 60, 40, 25, 15];
+const BASE_HEIGHTS = [15, 25, 40, 65, 35, 80, 45, 95, 115, 75, 45, 85, 35, 60, 40, 25, 15];
 const BASE_OPACITIES = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1, 1, 1, 0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5];
 
 function WaveBar({ baseHeight, baseOpacity, isActive, color = ACCENT_TOP }) {
@@ -40,7 +41,7 @@ function WaveBar({ baseHeight, baseOpacity, isActive, color = ACCENT_TOP }) {
     if (loopRef.current) { loopRef.current.stop(); loopRef.current = null; }
     if (isActive) {
       const randomTarget = () => Math.max(8, Math.min(115, baseHeight * (0.5 + Math.random() * 1.8)));
-      const randomDur    = () => 200 + Math.random() * 300;
+      const randomDur = () => 200 + Math.random() * 300;
       const animate = () => {
         loopRef.current = Animated.sequence([
           Animated.timing(anim, { toValue: randomTarget(), duration: randomDur(), useNativeDriver: false }),
@@ -69,7 +70,7 @@ function PulseDot({ color, delay }) {
     Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
-        Animated.timing(anim, { toValue: 1,   duration: 400, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.timing(anim, { toValue: 0.4, duration: 400, useNativeDriver: true }),
       ])
     ).start();
@@ -108,12 +109,6 @@ const KeyboardIcon = () => (
     <Path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
   </Svg>
 );
-const ShieldIcon = () => (
-  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={TEXT_GRAY} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <Path d="M9 12l2 2 4-4" />
-  </Svg>
-);
 const AlertIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <Circle cx="12" cy="12" r="10" />
@@ -134,42 +129,47 @@ function TranscriptLine({ role, text }) {
 }
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
-export default function HomeScreen({ onSubmit }) {
+export default function HomeScreen({ onSubmit, onClose, userProfile = null, phoneNumber = null }) {
   const insets = useSafeAreaInsets();
-  const [mode, setMode]           = useState('voice');
+  const [mode, setMode] = useState('voice');
   const [symptomText, setSymptomText] = useState('');
+  const [language, setLanguage] = useState('en'); // 'en' | 'tw'
+
+  const toggleLanguage = useCallback(() => {
+    setLanguage((prev) => (prev === 'en' ? 'tw' : 'en'));
+  }, []);
 
   const {
     sessionState, error, transcriptLines, permissionDenied,
     startSession, endSession, toggleRecording, isRecording,
   } = useRealtimeSession({
     onTriageComplete: (summary) => onSubmit?.(summary),
+    language,
+    userProfile,
+    phoneNumber,
   });
 
-  // Auto-start the session as soon as the screen mounts
-  useEffect(() => {
-    startSession();
-  }, []);
+  // Session starts when the user taps the mic — no auto-start on mount.
 
-  const isConnecting  = sessionState === 'connecting';
-  const isListening   = sessionState === 'listening';
-  const isAiSpeaking  = sessionState === 'ai_speaking';
-  const isProcessing  = sessionState === 'processing';
+  const isConnecting = sessionState === 'connecting';
+  const isListening = sessionState === 'listening';
+  const isAiSpeaking = sessionState === 'ai_speaking';
+  const isProcessing = sessionState === 'processing';
   const isUserRecording = sessionState === 'recording';
-  const isActive      = isConnecting || isListening || isAiSpeaking || isProcessing || isUserRecording;
-  const hasError      = sessionState === 'error';
+  const isActive = isConnecting || isListening || isAiSpeaking || isProcessing || isUserRecording;
+  const hasError = sessionState === 'error';
 
   // Badge label and waveform color reflect current state
-  const badgeLabel = isConnecting   ? 'CONNECTING…'
-    : isUserRecording               ? 'RECORDING'
-    : isProcessing                  ? 'THINKING…'
-    : isAiSpeaking                  ? 'AI SPEAKING'
-    : isListening                   ? 'TAP TO SPEAK'
-    : hasError                      ? 'TAP TO RETRY'
-    :                                 'CONNECTING…';
+  const badgeLabel = isConnecting ? 'CONNECTING…'
+    : isUserRecording ? 'LISTENING…'
+      : isProcessing ? 'THINKING…'
+        : isAiSpeaking ? 'AI SPEAKING'
+          : isListening ? 'READY'
+            : hasError ? 'TAP TO RETRY'
+              : 'CONNECTING…';
 
   const waveColor = isAiSpeaking ? AI_BLUE : isUserRecording ? USER_ORANGE : ACCENT_TOP;
-  const waveActive = isListening || isAiSpeaking || isUserRecording;
+  const waveActive = isUserRecording || isAiSpeaking;
 
   const handleMicPress = useCallback(async () => {
     if (isListening || isUserRecording) {
@@ -187,7 +187,7 @@ export default function HomeScreen({ onSubmit }) {
     }
   }, [isActive, isListening, isUserRecording, toggleRecording, startSession, endSession]);
 
-  const switchToType  = useCallback(() => { if (isActive) endSession(); setMode('type'); }, [isActive, endSession]);
+  const switchToType = useCallback(() => { if (isActive) endSession(); setMode('type'); }, [isActive, endSession]);
   const switchToVoice = useCallback(() => setMode('voice'), []);
 
   const handleTextSubmit = useCallback(() => {
@@ -205,22 +205,27 @@ export default function HomeScreen({ onSubmit }) {
   }, [symptomText, onSubmit]);
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <KeyboardAvoidingView
+      style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconBtn}>
-          <CloseIcon />
-        </TouchableOpacity>
+        {onClose ? (
+          <TouchableOpacity style={styles.iconBtn} onPress={() => { endSession(); onClose(); }}>
+            <CloseIcon />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.iconBtn} />
+        )}
         <Image
           source={require('../assets/visante-blue.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <TouchableOpacity style={styles.iconBtn}>
-          <DotsIcon />
-        </TouchableOpacity>
+        <View style={styles.iconBtn} />
       </View>
 
       {/* ── Error / permission banner ── */}
@@ -251,12 +256,12 @@ export default function HomeScreen({ onSubmit }) {
             <Text style={styles.h1}>How can I help{'\n'}you today?</Text>
             <Text style={styles.subtitle}>
               {isActive
-                ? 'Speak naturally. The AI will guide you through the questions.'
-                : 'Tap the microphone and describe your symptoms.'}
+                ? 'Speak naturally — the mic auto-detects when you stop.'
+                : 'Tap the microphone to start your consultation.'}
             </Text>
           </View>
 
-          {/* Waveform area */}
+          {/* Waveform area — fills the center */}
           <View style={styles.waveBlock}>
             <View style={styles.soundwaveContainer}>
               {BASE_HEIGHTS.map((h, i) => (
@@ -277,41 +282,6 @@ export default function HomeScreen({ onSubmit }) {
               </View>
               <Text style={styles.listeningText}>{badgeLabel}</Text>
             </View>
-          </View>
-
-          {/* Mic button */}
-          <View style={styles.micBlock}>
-            <View style={styles.micRing}>
-              <TouchableOpacity
-                style={[
-                  styles.micBtn,
-                  isActive  && styles.micBtnActive,
-                  isConnecting && styles.micBtnConnecting,
-                ]}
-                onPress={handleMicPress}
-                activeOpacity={0.85}
-                disabled={isConnecting || isProcessing || isAiSpeaking}
-              >
-                {isUserRecording ? <StopIcon /> : <MicIcon />}
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.tapText}>
-              {isConnecting ? 'Connecting…'
-                : isUserRecording ? 'Tap to send'
-                : isProcessing ? 'Thinking…'
-                : isAiSpeaking ? 'AI is speaking…'
-                : isListening ? 'Tap to speak'
-                : hasError ? 'Tap to retry'
-                : 'Connecting…'}
-            </Text>
-          </View>
-
-          {/* Switch to text input */}
-          <View style={styles.bottomBlock}>
-            <TouchableOpacity style={styles.typeBtn} onPress={switchToType} activeOpacity={0.85}>
-              <KeyboardIcon />
-              <Text style={styles.typeBtnText}>Type your symptoms</Text>
-            </TouchableOpacity>
           </View>
 
         </View>
@@ -357,12 +327,45 @@ export default function HomeScreen({ onSubmit }) {
         </View>
       )}
 
-      {/* ── Footer ── */}
-      <View style={styles.footer}>
-        <ShieldIcon />
-        <Text style={styles.footerText}>HIPAA SECURE</Text>
-      </View>
-    </View>
+      {/* Mic + type button — directly above footer */}
+      {mode === 'voice' && (
+        <View style={styles.bottomControls}>
+          {/* Mic button */}
+          <View style={styles.micBlock}>
+            <View style={styles.micRing}>
+              <TouchableOpacity
+                style={[
+                  styles.micBtn,
+                  (isUserRecording || isProcessing || isAiSpeaking) && styles.micBtnActive,
+                  isConnecting && styles.micBtnConnecting,
+                ]}
+                onPress={handleMicPress}
+                activeOpacity={0.85}
+                disabled={isConnecting || isProcessing || isAiSpeaking}
+              >
+                {isUserRecording ? <StopIcon /> : <MicIcon />}
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.tapText}>
+              {isConnecting ? 'Connecting…'
+                : isUserRecording ? 'Listening… tap to send early'
+                  : isProcessing ? 'Thinking…'
+                    : isAiSpeaking ? 'AI is speaking…'
+                      : isListening ? 'Tap to speak'
+                        : hasError ? 'Tap to retry'
+                          : 'Tap to start'}
+            </Text>
+          </View>
+
+          {/* Switch to text input */}
+          <TouchableOpacity style={styles.typeBtn} onPress={switchToType} activeOpacity={0.85}>
+            <KeyboardIcon />
+            <Text style={styles.typeBtnText}>Type your symptoms</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+    </KeyboardAvoidingView>
   );
 }
 
@@ -487,7 +490,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
-    maxHeight: 200,
   },
   soundwaveContainer: {
     flexDirection: 'row',
@@ -525,10 +527,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  // Bottom controls container (mic + type button)
+  bottomControls: {
+    alignItems: 'center',
+    gap: 20,
+    paddingBottom: 16,
+  },
+
   // Mic button
   micBlock: {
     alignItems: 'center',
-    paddingBottom: '3%',
   },
   micRing: {
     width: 112,
@@ -552,21 +560,17 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 8,
   },
-  micBtnActive:      { backgroundColor: '#8b2e32' },
-  micBtnConnecting:  { backgroundColor: '#94a3b8', opacity: 0.7 },
-  tapText:           { color: TEXT_MUTED, fontSize: 15, fontWeight: '500' },
+  micBtnActive: { backgroundColor: '#8b2e32' },
+  micBtnConnecting: { backgroundColor: '#94a3b8', opacity: 0.7 },
+  tapText: { color: TEXT_MUTED, fontSize: 15, fontWeight: '500' },
 
-  // Bottom switch button
-  bottomBlock: {
-    paddingBottom: '2%',
-  },
   typeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
     width: '100%',
-    paddingVertical: 18,
+    paddingVertical: 14,
     backgroundColor: WHITE,
     borderWidth: 1,
     borderColor: BORDER,
@@ -620,13 +624,4 @@ const styles = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.4 },
   submitBtnText: { color: WHITE, fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
 
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-  },
-  footerText: { color: TEXT_GRAY, fontSize: 11, fontWeight: '600', letterSpacing: 1 },
 });

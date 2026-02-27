@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting Room</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #fcfcfc;
+            --text-dark: #111827;
+            --text-gray: #64748b;
+            --text-light-gray: #94a3b8;
+            --primary-red: #bb5454;
+            --card-bg: #ffffff;
+            --tip-bg: #fdf8f3;
+            --tip-border: #f9ede0;
+            --tip-icon: #e28e46;
+            --status-green: #10b981;
+            --star-gold: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: var(--bg-main);
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 24px 10px;
+        }
+
+        .header-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #475569;
+        }
+
+        .header-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        /* Main Content */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 8px;
+            margin-top: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        /* Timer Circle */
+        .timer-wrapper {
+            width: 190px;
+            height: 190px;
+            border-radius: 50%;
+            border: 12px solid var(--primary-red);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            background: #fbfbfb;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+        }
+
+        .est-wait {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light-gray);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .time-value {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .time-number {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1;
+        }
+
+        .time-unit {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-gray);
+        }
+
+        /* Profile Card */
+        .profile-card {
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9;
+            border-top: 3px solid #fed7aa;
+            margin-bottom: 20px;
+        }
+
+        .avatar-container {
+            position: relative;
+            margin-right: 16px;
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e2e8f0;
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            background: var(--status-green);
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .profile-role {
+            font-size: 13px;
+            color: var(--text-gray);
+            margin-bottom: 4px;
+        }
+
+        .profile-rating {
+            font-size: 12px;
+            color: var(--text-dark);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .star-icon {
+            color: var(--star-gold);
+            font-size: 14px;
+        }
+
+        .review-count {
+            color: var(--text-light-gray);
+            font-weight: 400;
+        }
+
+        .info-icon {
+            color: var(--text-light-gray);
+            cursor: pointer;
+        }
+
+        /* Tip Card */
+        .tip-card {
+            width: 100%;
+            background: var(--tip-bg);
+            border: 1px solid var(--tip-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .tip-icon-wrapper {
+            color: var(--tip-icon);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .tip-content-text h3 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .tip-content-text p {
+            font-size: 12px;
+            color: var(--text-gray);
+            line-height: 1.5;
+        }
+
+        /* Footer Actions */
+        .footer {
+            padding: 20px 24px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(187, 84, 84, 0.2);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: transparent;
+            color: var(--text-gray);
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+    <div class="header">
+        <div class="header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </div>
+        <div class="header-title">WAITING ROOM</div>
+        <div class="header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+        </div>
+    </div>
+
+    <div class="content">
+        <h1>You're up next</h1>
+        <p class="subtitle">We are connecting you to a specialist.</p>
+
+        <div class="timer-wrapper">
+            <div class="est-wait">EST. WAIT</div>
+            <div class="time-value">
+                <span class="time-number">4</span>
+                <span class="time-unit">sec</span>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <div class="avatar-container">
+                <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150&h=150" alt="Kwame Ansah" class="avatar">
+                <div class="status-dot">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="profile-name">Kwame Ansah</div>
+                <div class="profile-role">Physician Assistant</div>
+                <div class="profile-rating">
+                    <span class="star-icon">★</span> 4.9 
+                    <span class="review-count">(120+ reviews)</span>
+                </div>
+            </div>
+
+            <div class="info-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+        </div>
+
+        <div class="tip-card">
+            <div class="tip-icon-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="9" y1="18" x2="15" y2="18"></line>
+                    <line x1="10" y1="22" x2="14" y2="22"></line>
+                    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                </svg>
+            </div>
+            <div class="tip-content-text">
+                <h3>While you wait</h3>
+                <p>Please relax and feel comfortable there is nothing to be afraid of.<br>ensure you are in a quiet, well-lit place for the consultation.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="btn-primary">Check Connection</button>
+        <button class="btn-secondary">Cancel Appointment</button>
+    </div>
+</div>
+
+</body>
+</html>

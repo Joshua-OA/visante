@@ -9,9 +9,11 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.1",
     "@vapi-ai/react-native": "^0.3.0",
     "expo": "~54.0.33",
     "expo-av": "^16.0.8",
+    "expo-cellular": "~8.0.8",
     "expo-constants": "~18.0.13",
     "expo-file-system": "~19.0.21",
     "expo-haptics": "~15.0.8",

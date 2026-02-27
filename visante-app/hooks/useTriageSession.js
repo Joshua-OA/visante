@@ -4,6 +4,11 @@
  *   'openai-rest'      — single Chat Completions call with audio in/out (gpt-4o-audio-preview)
  *   'openai-realtime'  — direct WebSocket to OpenAI Realtime API (gpt-4o-mini-realtime)
  *   'vapi'             — Vapi managed voice pipeline (gpt-4o-mini via Vapi)
+ *
+ * options.language:
+ *   'en'  (default) — English; uses OpenAI Whisper for user audio transcription
+ *   'tw'            — Twi (Akan); uses GhanaNLP ASR v2 for transcription and
+ *                     instructs the AI to converse in Twi
  */
 const PROVIDER = 'openai-rest'; // ← change to 'openai-realtime' or 'vapi' to switch
 
